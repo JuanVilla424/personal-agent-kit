@@ -1,0 +1,107 @@
+---
+# .pre-commit-config.yaml
+
+exclude: >-
+  ^(node_modules|logs|\.venv|venv|bmad-src|bmad-custom-src|\.bmad|\.claude|temp)/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        types: [yaml]
+        files: \.(yaml|yml)$
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: debug-statements
+      - id: detect-private-key
+
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=100]
+
+  - repo: https://github.com/PyCQA/pylint
+    rev: v4.0.5
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          - --max-line-length=100
+          - --disable=C0114,C0115,C0116
+          - --disable=R0903,R0913,W0613
+        exclude: ^(\.venv|venv|tests|bmad-src|bmad-custom-src|\.bmad|\.claude|temp)/
+
+  - repo: local
+    hooks:
+      - id: yaml-format
+        name: yaml-format
+        entry: python scripts/format_yaml/main.py
+        language: system
+        types: [yaml]
+        files: \.(yaml)$
+        exclude: ^\.pre-commit-config\.yaml$
+
+      - id: yml-format
+        name: yml-format
+        entry: python scripts/format_yml/main.py
+        language: system
+        types: [yaml]
+        files: \.(yml)$
+        # Grafana provisioning has intentional long alert expressions; yml-format would split
+        # them with backslash continuation (invalid YAML), so it never converges. Leave it to
+        # check-yaml. See the install reformat-loop incident.
+        exclude: '^local/monitoring/grafana/.*$'
+
+      - id: bump-year
+        name: bump-year
+        entry: python scripts/bump_year/main.py --log-level=INFO
+        always_run: true
+        pass_filenames: false
+        language: system
+
+      - id: generate-changelog
+        name: generate-changelog
+        entry: python scripts/generate_changelog/main.py --log-level=INFO
+        always_run: true
+        pass_filenames: false
+        language: system
+
+      - id: validate-commit
+        name: validate-commit
+        entry: python scripts/control_commit/main.py --log-level=DEBUG
+        always_run: true
+        pass_filenames: false
+        language: system
+        stages: [pre-push]
+
+      - id: commit-msg-version-check
+        name: commit-msg-version-check
+        entry: python scripts/commit_msg_version_bump/main.py --log-level=DEBUG
+        always_run: true
+        pass_filenames: false
+        language: system
+        stages: [pre-push]
+
+    #  - id: pytest
+    #    name: pytest
+    #    entry: .venv/bin/python -m pytest tests/ -q
+    #    language: system
+    #    pass_filenames: false
+    #    always_run: true
+    #    stages: [pre-push]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: \.(markdown|md)$

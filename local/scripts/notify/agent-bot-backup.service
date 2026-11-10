@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily backup — slack bot audit + data + config
+
+[Service]
+Type=oneshot
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit/local/scripts/notify
+EnvironmentFile=/home/<user>/personal-agent-kit/local/scripts/notify/.env
+ExecStart=/home/<user>/personal-agent-kit/local/scripts/notify/venv/bin/python3 -m ops.backup_restore backup
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,113 @@
+{"type": "memory", "id": "m01", "text": "My staging Grafana runs on port 3007", "category": "systems"}
+{"type": "memory", "id": "u1a", "text": "Laptop is a ThinkPad X1 Carbon Gen 11", "category": "systems", "state_key": "laptop"}
+{"type": "memory", "id": "m02", "text": "The home NAS is a Synology DS923+ with four 8 TB disks", "category": "systems"}
+{"type": "memory", "id": "u2a", "text": "Editor theme is Gruvbox dark", "category": "style", "state_key": "editor-theme"}
+{"type": "memory", "id": "m03", "text": "I prefer answers short and to the point, no preamble", "category": "style"}
+{"type": "memory", "id": "u3a", "text": "Phone is a Pixel 7", "category": "other", "state_key": "phone"}
+{"type": "memory", "id": "m04", "text": "Secrets live in the encrypted vault, never in the repository", "category": "security"}
+{"type": "memory", "id": "u4a", "text": "Team standup is at 9:15", "category": "business", "state_key": "standup"}
+{"type": "memory", "id": "m05", "text": "Project codename for the invoicing rewrite is BLUEHERON", "category": "business"}
+{"type": "memory", "id": "u5a", "text": "Default Python version is 3.11", "category": "systems", "state_key": "python"}
+{"type": "memory", "id": "m06", "text": "My GitHub handle for side projects is quiet-otter-77", "category": "other"}
+{"type": "memory", "id": "u6a", "text": "Drives a 2015 Mazda 3", "category": "other", "state_key": "car"}
+{"type": "memory", "id": "m07", "text": "Backups run nightly at 02:30 and keep 14 days", "category": "systems"}
+{"type": "memory", "id": "u7a", "text": "Uses KeePassXC as password manager", "category": "security", "state_key": "password-manager"}
+{"type": "memory", "id": "m08", "text": "Uses Neovim with the lazy.nvim plugin manager for everything", "category": "style"}
+{"type": "memory", "id": "u8a", "text": "Home internet is 300 Mbps fiber from NetCo", "category": "systems", "state_key": "isp"}
+{"type": "memory", "id": "m09", "text": "The PostgreSQL primary for the side project listens on 5433, not 5432", "category": "systems"}
+{"type": "memory", "id": "u9a", "text": "Main monitor is a 27 inch 1440p panel", "category": "other", "state_key": "monitor"}
+{"type": "memory", "id": "m10", "text": "Coffee order: flat white with oat milk", "category": "other"}
+{"type": "memory", "id": "u10a", "text": "Home DNS runs on Pi-hole", "category": "systems", "state_key": "dns"}
+{"type": "memory", "id": "m11", "text": "Daughter's school pickup is at 15:10 on weekdays", "category": "other"}
+{"type": "memory", "id": "m12", "text": "Prefers pytest over unittest and always uses fixtures", "category": "style"}
+{"type": "memory", "id": "m13", "text": "The VPN to the lab uses WireGuard on UDP 51820", "category": "systems"}
+{"type": "memory", "id": "m14", "text": "Tax filing deadline this year is April 30", "category": "business"}
+{"type": "memory", "id": "m15", "text": "Allergic to peanuts", "category": "other"}
+{"type": "memory", "id": "m16", "text": "Writes commit messages in English, lowercase, with a type prefix", "category": "style"}
+{"type": "memory", "id": "m17", "text": "The 3D printer is a Prusa MK4 with a 0.6 mm nozzle", "category": "other"}
+{"type": "memory", "id": "m18", "text": "Mother's birthday is on March 3", "category": "other"}
+{"type": "memory", "id": "u5b", "text": "Default Python version is now 3.12", "category": "systems", "state_key": "python"}
+{"type": "memory", "id": "m19", "text": "API rate limit for the weather service is 600 calls per hour", "category": "systems"}
+{"type": "memory", "id": "m20", "text": "Runs Fedora 41 on the workstation and Ubuntu 24.04 on servers", "category": "systems"}
+{"type": "memory", "id": "m21", "text": "Mentor for the Rust study group is Ana Prieto", "category": "business"}
+{"type": "memory", "id": "m22", "text": "Favorite test dataset is the Iris dataset for quick demos", "category": "other"}
+{"type": "memory", "id": "m23", "text": "Gym sessions are Monday, Wednesday and Friday at 7am", "category": "other"}
+{"type": "memory", "id": "m24", "text": "Wants all diagrams in Mermaid, not images", "category": "style"}
+{"type": "memory", "id": "m25", "text": "Domain for the personal blog is lucidcanopy.dev", "category": "business"}
+{"type": "memory", "id": "m26", "text": "The Raspberry Pi in the garage has the hostname bramble", "category": "systems"}
+{"type": "memory", "id": "m27", "text": "Two-factor recovery codes are stored in the fireproof box, not online", "category": "security"}
+{"type": "memory", "id": "m28", "text": "Speaks Spanish at home and English at work", "category": "style"}
+{"type": "memory", "id": "m29", "text": "Kubernetes context for the homelab is k3s-garage", "category": "systems"}
+{"type": "memory", "id": "m30", "text": "Budget for cloud spending is 40 USD per month", "category": "business"}
+{"type": "memory", "id": "m31", "text": "El número de cliente de la clínica veterinaria es 88412", "category": "other"}
+{"type": "memory", "id": "m32", "text": "Prefiere que las reuniones de la mañana no pasen de 30 minutos", "category": "style"}
+{"type": "memory", "id": "m33", "text": "La contraseña del wifi de invitados se cambia cada lunes", "category": "security"}
+{"type": "memory", "id": "m34", "text": "El repositorio de recetas familiares se llama cocina-abuela", "category": "other"}
+{"type": "memory", "id": "m35", "text": "El servidor de impresión de la oficina está en la IP 192.168.4.20", "category": "systems"}
+{"type": "memory", "id": "m36", "text": "Los viernes trabaja desde la biblioteca del barrio", "category": "other"}
+{"type": "memory", "id": "m37", "text": "Tiene un perro llamado Tango", "category": "other"}
+{"type": "memory", "id": "m38", "text": "Odia las notificaciones push del calendario", "category": "style"}
+{"type": "memory", "id": "u1b", "text": "Switched laptop to a Framework 13 with 32 GB RAM", "category": "systems", "state_key": "laptop"}
+{"type": "memory", "id": "u2b", "text": "Changed the editor theme to Catppuccin Mocha", "category": "style", "state_key": "editor-theme"}
+{"type": "memory", "id": "u3b", "text": "Upgraded phone to a Pixel 9 Pro", "category": "other", "state_key": "phone"}
+{"type": "memory", "id": "u4b", "text": "Standup moved to 9:45 starting this month", "category": "business", "state_key": "standup"}
+{"type": "memory", "id": "u5c", "text": "Moved the default Python to 3.13", "category": "systems", "state_key": "python"}
+{"type": "memory", "id": "u6b", "text": "Sold the Mazda; now drives a 2022 Kia EV6", "category": "other", "state_key": "car"}
+{"type": "memory", "id": "u7b", "text": "Migrated passwords to Bitwarden", "category": "security", "state_key": "password-manager"}
+{"type": "memory", "id": "u8b", "text": "Upgraded home internet to 1 Gbps fiber", "category": "systems", "state_key": "isp"}
+{"type": "memory", "id": "u9b", "text": "Replaced the main monitor with a 32 inch 4K", "category": "other", "state_key": "monitor"}
+{"type": "memory", "id": "u10b", "text": "Replaced Pi-hole with AdGuard Home for DNS", "category": "systems", "state_key": "dns"}
+{"type": "question", "id": "q01", "kind": "exact", "split": "dev", "text": "What is BLUEHERON?", "answer": "m05"}
+{"type": "question", "id": "q02", "kind": "exact", "split": "test", "text": "Who is quiet-otter-77?", "answer": "m06"}
+{"type": "question", "id": "q03", "kind": "exact", "split": "dev", "text": "What runs on UDP 51820?", "answer": "m13"}
+{"type": "question", "id": "q04", "kind": "exact", "split": "test", "text": "What is bramble?", "answer": "m26"}
+{"type": "question", "id": "q05", "kind": "exact", "split": "dev", "text": "Where does k3s-garage point?", "answer": "m29"}
+{"type": "question", "id": "q06", "kind": "exact", "split": "test", "text": "What is 5433 used for?", "answer": "m09"}
+{"type": "question", "id": "q07", "kind": "exact", "split": "dev", "text": "What happens at 02:30?", "answer": "m07"}
+{"type": "question", "id": "q08", "kind": "exact", "split": "test", "text": "What is lucidcanopy.dev?", "answer": "m25"}
+{"type": "question", "id": "q09", "kind": "exact", "split": "dev", "text": "What is the DS923+?", "answer": "m02"}
+{"type": "question", "id": "q10", "kind": "exact", "split": "test", "text": "What is 88412?", "answer": "m31"}
+{"type": "question", "id": "q11", "kind": "exact", "split": "dev", "text": "What is at 192.168.4.20?", "answer": "m35"}
+{"type": "question", "id": "q12", "kind": "exact", "split": "test", "text": "What is cocina-abuela?", "answer": "m34"}
+{"type": "question", "id": "q13", "kind": "exact", "split": "dev", "text": "What nozzle does the MK4 use?", "answer": "m17"}
+{"type": "question", "id": "q14", "kind": "exact", "split": "test", "text": "Where does Fedora 41 run?", "answer": "m20"}
+{"type": "question", "id": "q15", "kind": "exact", "split": "dev", "text": "What allows 600 calls per hour?", "answer": "m19"}
+{"type": "question", "id": "q16", "kind": "exact", "split": "test", "text": "Who is Ana Prieto?", "answer": "m21"}
+{"type": "question", "id": "q17", "kind": "paraphrase", "split": "dev", "text": "How long should my replies be?", "answer": "m03"}
+{"type": "question", "id": "q18", "kind": "paraphrase", "split": "test", "text": "Where should credentials be kept?", "answer": "m04"}
+{"type": "question", "id": "q19", "kind": "paraphrase", "split": "dev", "text": "Which text editor do I code in?", "answer": "m08"}
+{"type": "question", "id": "q20", "kind": "paraphrase", "split": "test", "text": "What testing framework do I like?", "answer": "m12"}
+{"type": "question", "id": "q21", "kind": "paraphrase", "split": "dev", "text": "When do I collect my kid after class?", "answer": "m11"}
+{"type": "question", "id": "q22", "kind": "paraphrase", "split": "test", "text": "What food must I avoid?", "answer": "m15"}
+{"type": "question", "id": "q23", "kind": "paraphrase", "split": "dev", "text": "When do we celebrate mom?", "answer": "m18"}
+{"type": "question", "id": "q24", "kind": "paraphrase", "split": "test", "text": "Which days do I work out?", "answer": "m23"}
+{"type": "question", "id": "q25", "kind": "paraphrase", "split": "dev", "text": "How should I draw architecture pictures?", "answer": "m24"}
+{"type": "question", "id": "q26", "kind": "paraphrase", "split": "test", "text": "Which languages do I use with family and colleagues?", "answer": "m28"}
+{"type": "question", "id": "q27", "kind": "paraphrase", "split": "dev", "text": "How much can I spend on hosting each month?", "answer": "m30"}
+{"type": "question", "id": "q28", "kind": "paraphrase", "split": "test", "text": "Where did I put the backup codes for my logins?", "answer": "m27"}
+{"type": "question", "id": "q29", "kind": "paraphrase", "split": "dev", "text": "What do I drink in the morning?", "answer": "m10"}
+{"type": "question", "id": "q30", "kind": "paraphrase", "split": "test", "text": "By when must I submit my taxes?", "answer": "m14"}
+{"type": "question", "id": "q31", "kind": "paraphrase", "split": "dev", "text": "What style do my git logs follow?", "answer": "m16"}
+{"type": "question", "id": "q32", "kind": "paraphrase", "split": "test", "text": "Which classic flower data do I demo with?", "answer": "m22"}
+{"type": "question", "id": "q33", "kind": "update", "split": "dev", "text": "What laptop do I have?", "answer": "u1b"}
+{"type": "question", "id": "q34", "kind": "update", "split": "test", "text": "What color scheme does my editor use?", "answer": "u2b"}
+{"type": "question", "id": "q35", "kind": "update", "split": "dev", "text": "Which phone do I carry?", "answer": "u3b"}
+{"type": "question", "id": "q36", "kind": "update", "split": "test", "text": "What time is standup?", "answer": "u4b"}
+{"type": "question", "id": "q37", "kind": "update", "split": "dev", "text": "What is my default Python version?", "answer": "u5c"}
+{"type": "question", "id": "q38", "kind": "update", "split": "test", "text": "What car do I drive?", "answer": "u6b"}
+{"type": "question", "id": "q39", "kind": "update", "split": "dev", "text": "Which password manager do I use?", "answer": "u7b"}
+{"type": "question", "id": "q40", "kind": "update", "split": "test", "text": "How fast is my home internet?", "answer": "u8b"}
+{"type": "question", "id": "q41", "kind": "update", "split": "dev", "text": "What monitor do I use?", "answer": "u9b"}
+{"type": "question", "id": "q42", "kind": "update", "split": "test", "text": "What handles DNS at home?", "answer": "u10b"}
+{"type": "question", "id": "q43", "kind": "crosslingual", "split": "dev", "text": "How long should morning meetings last?", "answer": "m32"}
+{"type": "question", "id": "q44", "kind": "crosslingual", "split": "test", "text": "How often does the guest wifi password change?", "answer": "m33"}
+{"type": "question", "id": "q45", "kind": "crosslingual", "split": "dev", "text": "Where do I work on Fridays?", "answer": "m36"}
+{"type": "question", "id": "q46", "kind": "crosslingual", "split": "test", "text": "What is my dog's name?", "answer": "m37"}
+{"type": "question", "id": "q47", "kind": "crosslingual", "split": "dev", "text": "Which notifications do I hate?", "answer": "m38"}
+{"type": "question", "id": "q48", "kind": "crosslingual", "split": "test", "text": "What is the family recipes repository called?", "answer": "m34"}
+{"type": "question", "id": "q49", "kind": "crosslingual", "split": "dev", "text": "¿Qué puerto usa el Grafana de staging?", "answer": "m01"}
+{"type": "question", "id": "q50", "kind": "crosslingual", "split": "test", "text": "¿Dónde se guardan los secretos?", "answer": "m04"}
+{"type": "question", "id": "q51", "kind": "crosslingual", "split": "dev", "text": "¿Qué editor uso para programar?", "answer": "m08"}
+{"type": "question", "id": "q52", "kind": "crosslingual", "split": "test", "text": "¿A qué hora son las copias de seguridad?", "answer": "m07"}
+{"type": "question", "id": "q53", "kind": "crosslingual", "split": "dev", "text": "¿Qué impresora 3D tengo?", "answer": "m17"}
+{"type": "question", "id": "q54", "kind": "crosslingual", "split": "test", "text": "¿Cuál es el presupuesto mensual para la nube?", "answer": "m30"}

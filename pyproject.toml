@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "personal-agent-kit"
+version = "1.0.1"
+description = "Personal Claude Code + OpenCode setup with a local memory brain and BMAD-based agent creation"
+authors = ["Juan Villa <contact@example.com>"]
+readme = "README.md"
+license = "Proprietary"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = ">=1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=3.7.0"
+bump2version = ">=1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["bin/tests", "scripts/tests", "local/scripts", "local/hooks", "utils", "evals/tests"]
+pythonpath = ["scripts"]
+python_files = "test_*.py"
+addopts = "-v --tb=short --cov=bin --cov=scripts --cov=local/scripts --cov=local/hooks --cov=utils --cov-report=xml:coverage.xml --cov-report=term-missing --cov-fail-under=96"
+asyncio_mode = "auto"
+
+
+[tool.coverage.run]
+source = ["bin", "scripts", "local/scripts", "local/hooks", "utils"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.pyright]
+# LSP: uses the repo's .venv as the interpreter (resolves third-party deps) and exposes
+# the imports the scripts resolve at runtime via dynamic sys.path.insert (notify, ops,
+# config, logger). Without this, the LSP flags false "could not be resolved" errors.
+venvPath = "."
+venv = ".venv"
+extraPaths = [".", "local/scripts/notify", "local/scripts/memory_index"]

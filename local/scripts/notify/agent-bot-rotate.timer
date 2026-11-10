@@ -1,0 +1,10 @@
+[Unit]
+Description=Monthly Bot Token rotation timer
+
+[Timer]
+OnCalendar=monthly
+Persistent=true
+Unit=agent-bot-rotate.service
+
+[Install]
+WantedBy=timers.target

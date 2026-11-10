@@ -1,0 +1,68 @@
+---
+services:
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: personal-agent-kit-prometheus
+    restart: unless-stopped
+    ports:
+      - "9390:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=180d
+      - --web.enable-lifecycle
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - memory_index
+
+  pushgateway:
+    image: prom/pushgateway:v1.10.0
+    container_name: personal-agent-kit-pushgateway
+    restart: unless-stopped
+    ports:
+      - "9391:9091"
+
+  # Limited to /proc + /sys (CPU, memory, load, network). The filesystem
+  # collector is disabled on purpose: it would require mounting the host root.
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: personal-agent-kit-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --no-collector.filesystem
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: personal-agent-kit-grafana
+    restart: unless-stopped
+    ports:
+      - "9392:3000"
+    env_file: ../../.env
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  # Qdrant lives in the memory_index compose; join its network to scrape it by
+  # DNS name (memory-qdrant:6333) without exposing Qdrant beyond docker.
+  memory_index:
+    external: true
+    name: memory_index_default

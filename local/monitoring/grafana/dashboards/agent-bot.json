@@ -1,0 +1,675 @@
+{
+  "title": "Personal Agent Kit Slack Bot",
+  "description": "How is the Slack bot service doing? RED method: traffic (rate), errors (timeouts, denials, rate-limit, anomalies), and Claude duration/cost. Audience: operations.",
+  "uid": "slack-bot-v1",
+  "version": 4,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Bot restarts",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "enable": true,
+        "iconColor": "yellow",
+        "expr": "max(bot_uptime_seconds) < 120",
+        "titleFormat": "Bot restarted"
+      }
+    ]
+  },
+  "schemaVersion": 36,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Messages received / min",
+      "description": "Incoming traffic to the bot from Slack. 0 is normal outside operating hours.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(60 * sum(rate(bot_messages_received_total[5m]))) or vector(0)",
+          "legendFormat": "msg/min"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: msg/min",
+          "min": 0,
+          "decimals": 1,
+          "noValue": "0",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 2,
+      "title": "Claude duration (p50 / p95)",
+      "description": "How long Claude takes to answer each query. p95 > 5 min is worth investigating.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(claude_subprocess_duration_seconds_bucket[10m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(claude_subprocess_duration_seconds_bucket[10m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "noValue": "No queries in the window",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 3,
+      "title": "Process pool",
+      "description": "Pre-warmed Claude processes available vs. in use.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(claude_pool_size)",
+          "legendFormat": "available"
+        },
+        {
+          "expr": "max(claude_pool_in_use)",
+          "legendFormat": "in use"
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 6
+      }
+    },
+    {
+      "id": 4,
+      "title": "Active threads",
+      "description": "Live conversation workers in the bot.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(bot_threads_active)",
+          "legendFormat": "threads"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 6
+      }
+    },
+    {
+      "id": 5,
+      "title": "Cache hits vs misses (ops/s)",
+      "description": "Response cache effectiveness. More hits = lower Claude cost.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(cache_hit_total[5m]))",
+          "legendFormat": "hits"
+        },
+        {
+          "expr": "sum(rate(cache_miss_total[5m]))",
+          "legendFormat": "misses"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: ops/s",
+          "min": 0,
+          "decimals": 2,
+          "noValue": "0",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 6,
+      "title": "Rate limit — rejections",
+      "description": "Users rejected for exceeding the request limit. Sustained > 0 = someone pushing too hard.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (user_id) (rate(rate_limit_rejected_total[5m])) or vector(0)",
+          "legendFormat": "{{user_id}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: rej/s",
+          "min": 0,
+          "noValue": "0",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 6,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 7,
+      "title": "Timeouts",
+      "description": "Queries that exceeded Claude's time limit. > 3 in 15 min triggers an alert.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(claude_timeout_total)",
+          "legendFormat": "timeouts"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 6,
+        "w": 4,
+        "h": 6
+      }
+    },
+    {
+      "id": 8,
+      "title": "Anomalies detected",
+      "description": "Messages flagged by the anomaly detector (spam/repetition). > 5 in 15 min triggers an alert.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(anomaly_detected_total)",
+          "legendFormat": "anomalies"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 6,
+        "w": 4,
+        "h": 6
+      }
+    },
+    {
+      "id": 9,
+      "title": "Bot Uptime",
+      "description": "Time since the service's last restart.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(bot_uptime_seconds)",
+          "legendFormat": "uptime"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "Bot down",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "yellow",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 3600
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 6,
+        "h": 4
+      }
+    },
+    {
+      "id": 10,
+      "title": "Cost per query — p95 (USD)",
+      "description": "Claude cost per query, from the result event. p95 > $1 is worth reviewing prompts over.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(claude_subprocess_cost_usd_bucket[15m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "min": 0,
+          "decimals": 2,
+          "noValue": "No queries in the window",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 12,
+        "w": 8,
+        "h": 4
+      }
+    },
+    {
+      "id": 11,
+      "title": "Permissions denied by reason",
+      "description": "Actions blocked by the bot's permission system.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (reason) (rate(permission_denied_total[5m])) or vector(0)",
+          "legendFormat": "{{reason}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: deny/s",
+          "min": 0,
+          "noValue": "0",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 12,
+        "w": 10,
+        "h": 4
+      }
+    },
+    {
+      "id": 12,
+      "title": "Anomaly Score p95",
+      "description": "Distribution of the detector's score (0-1). Detection threshold: 0.8.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(anomaly_score_bucket[15m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "decimals": 2,
+          "noValue": "No messages in the window",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 13,
+      "title": "2FA — challenges vs approvals",
+      "description": "Critical actions that required a second factor (RED challenge) and how many were approved (GREEN).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(two_factor_challenge_total)",
+          "legendFormat": "challenges"
+        },
+        {
+          "expr": "sum(two_factor_success_total)",
+          "legendFormat": "approved"
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 16,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 14,
+      "title": "TTS — voice responses",
+      "description": "Bot responses played back as audio in Slack.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(tts_play_total)",
+          "legendFormat": "playbacks"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 16,
+        "w": 8,
+        "h": 5
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+---
+defaults:
+  allowed_tools: [Read]
+  budget_usd_per_query: 1.00
+  rate_limit_per_hour: 10
+  models:
+    - claude-sonnet-5-5
+    - claude-haiku-5-5
+  mcp_enabled: true
+
+quiet_hours:
+  enabled: false
+  start: "22:00"
+  end: "06:00"
+  timezone: "system"  # "system" = host's own local time; or set an IANA zone (e.g. "Europe/Madrid")
+
+channels:
+  whitelist: []  # empty = all channels allowed
+
+workspaces:
+  whitelist: []  # empty = all workspaces allowed
+
+# Add real Slack user IDs here (format: Uxxxxxxxx):
+users:
+  "<your-slack-user-id>":
+    role: admin
+
+roles:
+  system:
+    allowed_tools:
+      - "Read"
+    dangerous_tools_require_2fa: false
+    budget_usd_per_query: 2.00
+    rate_limit_per_hour: 9999
+    models:
+      - claude-sonnet-5-5
+      - claude-haiku-5-5
+    bypass_quiet_hours: true
+    bypass_content_filter: true
+    mcp_enabled: true
+  admin:
+    allowed_tools: [Read, Bash, Edit, Write]
+    dangerous_tools_require_2fa: true
+    budget_usd_per_query: 5.00
+    rate_limit_per_hour: 200
+    models:
+      - claude-sonnet-5-5
+      - claude-opus-5-5
+      - claude-haiku-5-5
+    bypass_quiet_hours: true
+    bypass_content_filter: false
+    mcp_enabled: true
+  user:
+    allowed_tools: [Read]
+    dangerous_tools_require_2fa: false
+    budget_usd_per_query: 1.00
+    rate_limit_per_hour: 10
+    models:
+      - claude-sonnet-5-5
+      - claude-haiku-5-5
+    bypass_quiet_hours: false
+    bypass_content_filter: false
+    mcp_enabled: true
+  blocked:
+    allowed_tools: []
+    rate_limit_per_hour: 0
+    budget_usd_per_query: 0.0
+    models: []
+    bypass_quiet_hours: false
+    bypass_content_filter: false
+    mcp_enabled: false
+
+content_filter:
+  enabled: true
+  rules:
+    - id: prompt_injection
+      pattern: "(?i)(ignore previous|system\\s*:|<\\|.*?\\|>|ignore all instructions|disregard your)"
+    - id: jailbreak
+      pattern: "(?i)(DAN mode|developer mode|jailbreak|ignore your training)"
+  blocklist_topics: []
+
+anomaly:
+  enabled: true
+  score_threshold: 0.8
+  window_minutes: 10

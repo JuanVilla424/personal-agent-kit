@@ -1,0 +1,11 @@
+[Unit]
+Description=Watchdog — crash rate monitor + blue/green swap
+
+[Service]
+Type=oneshot
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit/local/scripts/notify
+EnvironmentFile=/home/<user>/personal-agent-kit/local/scripts/notify/.env
+ExecStart=/home/<user>/personal-agent-kit/local/scripts/notify/venv/bin/python3 -m ops.watchdog
+StandardOutput=journal
+StandardError=journal

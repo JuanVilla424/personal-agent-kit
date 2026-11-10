@@ -1,0 +1,14 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack-personal-agent-kit
+    receivers:
+      - uid: slack-personal-agent-kit-01
+        type: slack
+        settings:
+          url: $SLACK_ALERT_WEBHOOK
+          title: '🚨 {{ .CommonLabels.alertname }} — {{ .Status }}'
+          text: |-
+            {{ range .Alerts }}{{ .Annotations.summary }}
+            {{ end }}

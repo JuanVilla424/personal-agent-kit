@@ -1,0 +1,56 @@
+{"id": "file-scheme", "tool": "webfetch", "value": "file:///etc/passwd", "expect": "block", "why": "not http"}
+{"id": "ftp-scheme", "tool": "webfetch", "value": "ftp://example.com/x", "expect": "block", "why": "not http"}
+{"id": "loopback-ip", "tool": "webfetch", "value": "http://127.0.0.1:4096/session", "expect": "block", "why": "loopback, private or local"}
+{"id": "localhost-memory", "tool": "webfetch", "value": "http://localhost:7700/memory/search?q=x", "expect": "block", "why": "loopback, private or local"}
+{"id": "private-10", "tool": "webfetch", "value": "http://10.0.2.2:7700/memory/health", "expect": "block", "why": "loopback, private or local"}
+{"id": "private-192", "tool": "webfetch", "value": "http://192.168.1.10/", "expect": "block", "why": "loopback, private or local"}
+{"id": "metadata", "tool": "webfetch", "value": "http://169.254.169.254/latest/meta-data/", "expect": "block", "why": "loopback, private or local"}
+{"id": "ipv6-loopback", "tool": "webfetch", "value": "http://[::1]:7700/", "expect": "block", "why": "loopback, private or local"}
+{"id": "internal-name", "tool": "webfetch", "value": "http://qdrant.internal:6333/", "expect": "block", "why": "loopback, private or local"}
+{"id": "decimal-ip", "tool": "webfetch", "value": "http://2130706433/", "expect": "block", "why": "loopback, private or local"}
+{"id": "hex-ip", "tool": "webfetch", "value": "http://0x7f.0.0.1/", "expect": "block", "why": "loopback, private or local"}
+{"id": "short-ip", "tool": "webfetch", "value": "http://127.1/", "expect": "block", "why": "loopback, private or local"}
+{"id": "backslash-host", "tool": "webfetch", "value": "http://example.com\\@127.0.0.1/", "expect": "block", "why": "not a valid absolute URL"}
+{"id": "credentials-in-url", "tool": "webfetch", "value": "https://user:pass@example.com/", "expect": "block", "why": "credentials"}
+{"id": "token-in-query", "tool": "webfetch", "value": "https://example.com/?token=abc123", "expect": "block", "why": "secret-like key"}
+{"id": "api-key-in-query", "tool": "webfetch", "value": "https://example.com/?api_key=k", "expect": "block", "why": "secret-like key"}
+{"id": "password-in-query", "tool": "webfetch", "value": "https://example.com/login?password=hunter2", "expect": "block", "why": "secret-like key"}
+{"id": "session-in-fragment", "tool": "webfetch", "value": "https://example.com/#session_id=42", "expect": "block", "why": "secret-like key"}
+{"id": "jwt-in-query", "tool": "webfetch", "value": "https://example.com/?q=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.abc", "expect": "block", "why": "JWT"}
+{"id": "base64-run", "tool": "webfetch", "value": "https://example.com/?d=QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo0MTIzNDU2Nzg5MDEyMzQ1Njc4OTAx", "expect": "block", "why": "base64 run"}
+{"id": "hex-run", "tool": "webfetch", "value": "https://example.com/?x=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "expect": "block", "why": "hex run"}
+{"id": "not-a-url", "tool": "webfetch", "value": "not a url", "expect": "block", "why": "not a valid absolute URL"}
+{"id": "unique-local-v6", "tool": "webfetch", "value": "http://[fd00::1]:7700/", "expect": "block", "why": "loopback, private or local"}
+{"id": "link-local-v6", "tool": "webfetch", "value": "http://[fe80::1]/", "expect": "block", "why": "loopback, private or local"}
+{"id": "mapped-v4", "tool": "webfetch", "value": "http://[::ffff:10.0.0.1]/", "expect": "block", "why": "loopback, private or local"}
+{"id": "nat64", "tool": "webfetch", "value": "http://[64:ff9b::a00:1]/", "expect": "block", "why": "loopback, private or local"}
+{"id": "benchmark-net", "tool": "webfetch", "value": "http://198.18.0.1/", "expect": "block", "why": "loopback, private or local"}
+{"id": "documentation-net", "tool": "webfetch", "value": "http://192.0.2.10/", "expect": "block", "why": "loopback, private or local"}
+{"id": "multicast", "tool": "webfetch", "value": "http://239.255.255.250/", "expect": "block", "why": "loopback, private or local"}
+{"id": "broadcast", "tool": "webfetch", "value": "http://255.255.255.255/", "expect": "block", "why": "loopback, private or local"}
+{"id": "cgnat", "tool": "webfetch", "value": "http://100.64.0.1/", "expect": "block", "why": "loopback, private or local"}
+{"id": "github-token", "tool": "webfetch", "parts": ["https://example.com/?q=", "ghp", "_", "A1b2C3d4A1b2C3d4A1b2C3d4A1b2C3d4E5F6"], "expect": "block", "why": "known token shape"}
+{"id": "slack-token", "tool": "webfetch", "parts": ["https://example.com/x/", "xox", "b-", "1234567890-abcdefghij"], "expect": "block", "why": "known token shape"}
+{"id": "aws-key-id", "tool": "webfetch", "parts": ["https://example.com/?id=", "AK", "IA", "ZZZZZZZZZZZZZZZZ"], "expect": "block", "why": "known token shape"}
+{"id": "google-key", "tool": "webfetch", "parts": ["https://example.com/?k=", "AI", "za", "a1B2a1B2a1B2a1B2a1B2a1B2a1B2a1B2c3D"], "expect": "block", "why": "known token shape"}
+{"id": "openai-style-key", "tool": "webfetch", "parts": ["https://example.com/?k=", "sk", "-proj-", "a1B2c3D4a1B2c3D4a1B2c3D4a1B2c3D4"], "expect": "block", "why": "known token shape"}
+{"id": "gitlab-token", "tool": "webfetch", "parts": ["https://example.com/?t=", "glpat", "-", "x1Y2x1Y2x1Y2x1Y2x1Y2"], "expect": "block", "why": "known token shape"}
+{"id": "stripe-key", "tool": "webfetch", "parts": ["https://example.com/?s=", "sk", "_live_", "a1B2a1B2a1B2a1B2a1B2a1B2"], "expect": "block", "why": "known token shape"}
+{"id": "search-token", "tool": "websearch", "value": "token=abc123 what is this", "expect": "block", "why": "secret-like key"}
+{"id": "search-jwt", "tool": "websearch", "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.abc", "expect": "block", "why": "JWT"}
+{"id": "plain", "tool": "webfetch", "value": "https://example.com/", "expect": "allow"}
+{"id": "docs", "tool": "webfetch", "value": "https://docs.opencode.ai/docs/skills", "expect": "allow"}
+{"id": "arxiv", "tool": "webfetch", "value": "https://arxiv.org/abs/2505.22954v2", "expect": "allow"}
+{"id": "commit-sha", "tool": "webfetch", "value": "https://github.com/anthropics/claude-code/commit/0123456789abcdef0123456789abcdef01234567", "expect": "allow"}
+{"id": "long-hash-path", "tool": "webfetch", "value": "https://proceedings.iclr.cc/paper_files/paper/2025/hash/c05144b635df16ac9bbf8246bbbd55ca-Abstract-Conference.html", "expect": "allow"}
+{"id": "pmc", "tool": "webfetch", "value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7543772/", "expect": "allow"}
+{"id": "search-url", "tool": "webfetch", "value": "https://www.google.com/search?q=human-inspired+episodic+memory+for+infinite+context+llms", "expect": "allow"}
+{"id": "long-slug", "tool": "webfetch", "value": "http://example.org/path/with/a-very-long-slug-that-keeps-its-hyphens-all-the-way-through-the-end", "expect": "allow"}
+{"id": "fda", "tool": "webfetch", "value": "https://fda.gov/drugs", "expect": "allow"}
+{"id": "fdic", "tool": "webfetch", "value": "https://fdic.gov/", "expect": "allow"}
+{"id": "fcc", "tool": "webfetch", "value": "https://fcc.gov/", "expect": "allow"}
+{"id": "fd-io", "tool": "webfetch", "value": "https://fd.io/", "expect": "allow"}
+{"id": "sklearn-slug", "tool": "webfetch", "value": "https://example.com/sk-learn-tutorial-for-beginners-part-one", "expect": "allow"}
+{"id": "public-ip", "tool": "webfetch", "value": "https://1.1.1.1/", "expect": "allow"}
+{"id": "search-plain", "tool": "websearch", "value": "sleep-time compute Letta 2025", "expect": "allow"}
+{"id": "search-spanish", "tool": "websearch", "value": "cómo configurar qdrant con docker compose", "expect": "allow"}

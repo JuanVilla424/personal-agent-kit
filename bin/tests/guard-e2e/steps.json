@@ -1,0 +1,7 @@
+[
+  {"tool": "shell", "input": {"command": "rm -rf .venv/nope-e2e"}, "expect": "blocked"},
+  {"tool": "write", "input": {"path": "{project}/.env", "content": "E2E=1\n"}, "expect": "blocked"},
+  {"tool": "shell", "input": {"command": "git push --force origin nope-e2e"}, "expect": "blocked"},
+  {"tool": "fetch", "input": {"url": "http://127.0.0.1:9/e2e"}, "expect": "blocked"},
+  {"tool": "shell", "input": {"command": "echo e2e-ok"}, "expect": "e2e-ok"}
+]

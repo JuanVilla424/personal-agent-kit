@@ -1,0 +1,6 @@
+[submodule "local/scripts/chatterbox-tts-server"]
+	path = local/scripts/chatterbox-tts-server
+	url = https://github.com/devnen/Chatterbox-TTS-Server.git
+[submodule "helpers/ai18n"]
+	path = helpers/ai18n
+	url = https://github.com/JuanVilla424/ai18n.git

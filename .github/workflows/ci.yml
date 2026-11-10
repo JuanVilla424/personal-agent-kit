@@ -1,0 +1,71 @@
+---
+# .github/workflows/ci.yml
+
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Fetch the language policy resolver
+        run: git submodule update --init helpers/ai18n
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt -r requirements.dev.txt
+          .venv/bin/pip install -r local/scripts/memory_index/requirements.txt
+          .venv/bin/pip install -r local/scripts/notify/requirements.txt
+      - name: Run tests with the coverage gate
+        run: .venv/bin/python -m pytest -m "not integration"
+      - name: Validate the language policy
+        run: .venv/bin/python helpers/ai18n/src/ai18n.py check --root .
+
+  plugins:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Run the OpenCode plugin tests
+        run: bun test
+        working-directory: .opencode
+
+  pre-commit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt -r requirements.dev.txt
+      - name: Run the checks
+        # bump-year and generate-changelog rewrite files: they belong to the pre-push flow.
+        env:
+          SKIP: bump-year,generate-changelog
+        run: |
+          source .venv/bin/activate
+          pre-commit run --all-files

@@ -1,0 +1,48 @@
+---
+# BMAD Personal Agent Kit Configuration
+# Minimal configuration for standalone usage
+
+project_name: personal-agent-kit
+project_type: personal-agent-framework
+description: Personal Claude Code + OpenCode setup with BMAD-based agent creation
+
+version: 1.0.1
+
+versioning:
+  protocol: semantic-versioning-v1.0.1
+  start_version: 1.0.1
+  prohibited:
+    - 0.x.x
+    - 1.0.0
+
+structure:
+  agents_bundle: .bmad/local/
+  hooks: .claude/hooks/
+  scripts: .claude/scripts/
+  protocols: protocols/ultra/
+  temporary: temp/
+
+protocols:
+  dependency_management:
+    enabled: true
+    version: 1.0.1
+
+  semantic_versioning:
+    enabled: true
+    version: 1.0.1
+
+  workflow_file_management:
+    enabled: true
+    version: 1.0.1
+
+features:
+  custom_agent_creation: true
+  local_memory_brain: true
+  security_guardrails: true
+  approval_protocol: true
+  opencode_integration: true
+  tts_voice_output: true
+  architecture_diagrams: true
+
+environment: production
+last_updated: 2026-09-08

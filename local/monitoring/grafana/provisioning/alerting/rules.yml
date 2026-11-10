@@ -1,0 +1,273 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: personal-agent-kit
+    folder: Personal Agent Kit Alerts
+    interval: 1m
+    rules:
+      - uid: pak-bot-down
+        title: BotDown
+        condition: B
+        for: 2m
+        noDataState: Alerting
+        execErrState: OK
+        labels: { severity: critical }
+        annotations:
+          summary: 'The Slack bot is down — the exporter on :9090 is not responding to the scrape.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'up{job="slack-bot"}', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: pak-target-down
+        title: TargetDown
+        condition: B
+        for: 5m
+        noDataState: Alerting
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'At least one Prometheus target is down (see :9390/targets).'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'min(up)', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: pak-host-cpu
+        title: HostCPUHigh
+        condition: B
+        for: 10m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'agent-host CPU above 90% sustained for 10 minutes.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: '100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])))', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [90] }
+
+      - uid: pak-host-ram
+        title: HostRAMHigh
+        condition: B
+        for: 10m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'agent-host RAM above 90% sustained for 10 minutes.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: '100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [90] }
+
+      - uid: pak-host-disk
+        title: HostDiskFull
+        condition: B
+        for: 15m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'agent-host root disk above 85% usage.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'host_disk_used_percent', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [85] }
+
+      - uid: pak-claude-timeouts
+        title: ClaudeTimeouts
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'More than 3 Claude timeouts in 15 minutes on the bot.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'increase(claude_timeout_total[15m])', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [3] }
+
+      - uid: pak-anomaly-spike
+        title: AnomalySpike
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'More than 5 anomalies detected in 15 minutes on the bot.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'increase(anomaly_detected_total[15m])', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [5] }
+
+      - uid: pak-qdrant-down
+        title: QdrantDown
+        condition: B
+        for: 2m
+        noDataState: Alerting
+        execErrState: OK
+        labels: { severity: critical }
+        annotations:
+          summary: 'Qdrant is down — the agent memory and runbook index are not responding (scrape to memory-qdrant:6333 is failing).'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'up{job="qdrant"}', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: pak-pushgateway-down
+        title: PushgatewayDown
+        condition: B
+        for: 2m
+        noDataState: Alerting
+        execErrState: OK
+        labels: { severity: critical }
+        annotations:
+          summary: 'Pushgateway is down — all push metrics (scripts, memory) stop arriving. Total blind spot.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'up{job="pushgateway"}', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: pak-memory-service-stale
+        title: MemoryServiceNoHeartbeat
+        condition: B
+        for: 2m
+        noDataState: Alerting
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'memory_service has not pushed a heartbeat in more than 5 minutes — likely down (normal heartbeat every 60s).'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'time() - max(memory_last_run_timestamp_seconds)', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [300] }
+
+      # noDataState OK on purpose: no series = memory_service is down, and that's
+      # already alerted by pak-memory-service-stale — Alerting here would duplicate the same failure.
+      - uid: pak-memory-user-loss
+        title: PersonalMemoryLoss
+        condition: B
+        for: 2m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: warning }
+        annotations:
+          summary: 'The personal collection (agent_memory_user, scope=user) lost more than 3 entries in 1h. It is LOCAL-only with NO backup — a drop like this means anomalous deletion or the collection being recreated.'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 3900, to: 0 }
+            datasourceUid: prometheus
+            model: { expr: 'max_over_time(max(memory_entries{scope="user"})[1h:]) - max(memory_entries{scope="user"})', instant: true, refId: A }
+          - refId: B
+            relativeTimeRange: { from: 0, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: { type: gt, params: [3] }

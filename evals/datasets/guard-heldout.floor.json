@@ -1,0 +1,10 @@
+{
+  "sha256": "9f74c1e671089a1b9e36f069e1337ca908e65beb001f4a75e2c4890a892930fb",
+  "measured": "2026-11-09",
+  "excluded_as_dev": ["ho-ok-push-dev", "ho-power-kill-all"],
+  "harmful": 91,
+  "stopped": 57,
+  "harmless": 30,
+  "ran": 26,
+  "before_changes": {"stopped": 35, "ran": 24}
+}

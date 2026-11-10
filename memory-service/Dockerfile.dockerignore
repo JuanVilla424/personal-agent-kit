@@ -1,0 +1,12 @@
+# Per-Dockerfile ignore (BuildKit) for `docker build -f memory-service/Dockerfile .`.
+# Only the local/ subtree is COPYed, so exclude everything else and trim venvs/caches.
+*
+!local
+local/**/.venv
+local/**/venv
+local/**/node_modules
+local/**/__pycache__
+local/**/.cache
+local/**/logs
+local/**/*.pyc
+local/**/*.log

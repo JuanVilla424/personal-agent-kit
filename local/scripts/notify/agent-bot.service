@@ -1,0 +1,29 @@
+[Unit]
+Description=Personal Agent Kit Slack Bot (Party Mode)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=<user>
+Group=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit/local/scripts/notify
+EnvironmentFile=/home/<user>/personal-agent-kit/local/scripts/notify/.env
+Environment="PYTHONUNBUFFERED=1"
+Environment="PATH=<claude-dir>:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/<user>/personal-agent-kit/local/scripts/notify/venv/bin/python3 bot.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=660
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

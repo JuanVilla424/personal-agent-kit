@@ -1,0 +1,33 @@
+---
+# configs/model-protocol-map.yaml
+# Maps each model to the protocol variant it should load, based on its context window.
+# See MODELS.md (footprint + capacity).
+#
+# Consumers:
+#   - local/scripts/notify/core/model_protocol.py: the Slack bot adds the variant to its prompt.
+#   - bin/_lib.sh (model_for_role): the installers read `roles`.
+# Interactive Claude Code and OpenCode sessions always load the `full` protocols: every model
+# listed below has a window that fits them, so nothing there selects a variant.
+#
+#   full    = complete protocols (~22k)     — models with plenty of window
+#   compact = LIGHT condensed version (~3.8k) — small-window / tight-budget models
+#   ultra   = strict enforcement (~4.6k)    — NOT the smallest (it has MORE rules), not for budget
+#
+# Default rule (if the model isn't listed): use `default_variant` + `thresholds`.
+
+default_variant: full
+
+thresholds:
+  full_min_window: 64000 # window ≥ 64k → full is comfortable
+  compact_min_window: 32000 # 32k–64k → compact ; < 32k → not viable
+
+models:
+  claude-fable-5-1: { window: 1000000, variant: full }
+  claude-opus-5-5: { window: 1000000, variant: full }
+  claude-sonnet-5-5: { window: 1000000, variant: full }
+  claude-haiku-5-5: { window: 1000000, variant: full }
+  glm-5.2: { window: 128000, variant: full }
+
+# Models by operational ROLE — single source of truth for the installers (bin/_lib.sh: model_for_role).
+roles:
+  claude_code_subagent: claude-sonnet-5-5 # CLAUDE_CODE_SUBAGENT_MODEL (~/.bashrc, client boxes)

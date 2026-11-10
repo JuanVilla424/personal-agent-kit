@@ -1,0 +1,483 @@
+{
+  "title": "Personal Agent Kit Usage — People and Hosts",
+  "description": "Who uses the agent, from where, and how much? Slack by user/channel, Claude Code sessions on the server, and scripts' last activity by person/host. Audience: the team.",
+  "uid": "personal-agent-kit-usage",
+  "version": 5,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "schemaVersion": 36,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 201,
+      "title": "Claude Code — this server",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 7,
+      "title": "Claude Code — cumulative turns (this server)",
+      "description": "Turns completed in local Claude Code sessions (Stop hook). Covers direct agent usage outside Slack.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max by (invoked_by, host) (claude_code_turns_total)",
+          "legendFormat": "{{invoked_by}} @ {{host}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No activity yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 8,
+      "title": "Claude Code — last activity",
+      "description": "Time since the last turn completed in a local session.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max by (invoked_by, host) (claude_code_last_run_timestamp_seconds)",
+          "legendFormat": "{{invoked_by}} @ {{host}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "No activity yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 86400
+              },
+              {
+                "color": "text",
+                "value": 604800
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 9,
+      "title": "Claude Code — turns per hour",
+      "description": "Pace of work in local sessions.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "3600 * sum by (invoked_by) (rate(claude_code_turns_total[30m]))",
+          "legendFormat": "{{invoked_by}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: turns/h",
+          "min": 0,
+          "decimals": 1,
+          "noValue": "No activity in the window",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 202,
+      "title": "Slack — people and channels",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 1,
+      "title": "Bot requests by user (5m rate)",
+      "description": "Real-time per-person activity on Slack.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (user_id) (rate(bot_user_requests_total[5m])) or vector(0)",
+          "legendFormat": "{{user_id}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: req/s",
+          "min": 0,
+          "noValue": "No requests yet",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 2,
+      "title": "Requests by user (24h)",
+      "description": "Who used the bot most in the last 24 hours.",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sum by (user_id) (increase(bot_user_requests_total[24h])) or vector(0)",
+          "legendFormat": "{{user_id}}"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No requests yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 3,
+      "title": "Messages by channel (24h)",
+      "description": "Traffic distribution across Slack channels.",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sum by (channel_id) (increase(bot_messages_received_total[24h])) or vector(0)",
+          "legendFormat": "{{channel_id}}"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No messages yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 7
+      }
+    },
+    {
+      "id": 203,
+      "title": "Scripts by person/host",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 4,
+      "title": "Scripts' last activity by person/host",
+      "description": "Freshness of the last run of any script, grouped by who ran it and from which host.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max by (invoked_by, host) ({__name__=~\"(excel_report|pdf_report|memory_index)_last_run_timestamp_seconds\"})",
+          "legendFormat": "{{invoked_by}} @ {{host}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 172800
+              },
+              {
+                "color": "text",
+                "value": 691200
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "id": 204,
+      "title": "Bot security",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 5,
+      "title": "Rate limit — rejections by user",
+      "description": "Users throttled for excessive requests.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (user_id) (rate(rate_limit_rejected_total[5m])) or vector(0)",
+          "legendFormat": "{{user_id}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: rej/s",
+          "min": 0,
+          "noValue": "No rejections",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 6
+      }
+    },
+    {
+      "id": 6,
+      "title": "Permissions denied by reason",
+      "description": "Actions blocked by the bot's permission system.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (reason) (rate(permission_denied_total[5m])) or vector(0)",
+          "legendFormat": "{{reason}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: deny/s",
+          "min": 0,
+          "noValue": "No denials",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 12,
+        "h": 6
+      }
+    }
+  ]
+}

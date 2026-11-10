@@ -1,0 +1,67 @@
+[
+  {
+    "text": "All code, comments, logs, and variable names are written in English.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Never use the system Python; always use each tool's own .venv (a dot-prefixed folder: .venv). Each tool uses its own venv.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Dependencies: direct pip install is forbidden; add to requirements.txt and install from there (protocols/dependency-management.md).",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Ports are always non-default; never 8000/8080/3000/5000.",
+    "scope": "shared",
+    "category": "sistemas"
+  },
+  {
+    "text": "Docker containers run as non-root with the standard 'usrapp' user.",
+    "scope": "shared",
+    "category": "seguridad"
+  },
+  {
+    "text": "Commits: a single commit that groups everything, format type(core) in lowercase, no emojis or co-author.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Only commit when the user explicitly asks for it; never commit on your own initiative.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "A commit is always followed by its push (commit + push in the same step); never leave a commit local only.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "A commit without the 'candidate' marker doesn't carry it, and adding it is never inferred; the marker is only included when the user explicitly asks for it.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Before setting direction, read local data, memories, and protocols; if that isn't enough, ask instead of improvising.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Never infer knowledge automatically; always verify against the real source, and ask if it can't be verified.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Never infer the name of a specific resource (dashboard uid, service/cluster, metric, file, profile, cloud resource, etc.). ALWAYS check the real name in the source before using or referencing it.",
+    "scope": "shared",
+    "category": "estilo"
+  },
+  {
+    "text": "Never give an answer, value, or deliverable without first VALIDATING the result and the resource's real state against the source. Validate everything and be certain before responding; never claim something is 'done' or state a fact without having verified it in the moment.",
+    "scope": "shared",
+    "category": "estilo"
+  }
+]

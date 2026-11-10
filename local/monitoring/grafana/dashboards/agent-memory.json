@@ -1,0 +1,836 @@
+{
+  "title": "Personal Agent Kit Memory",
+  "description": "Is the Qdrant runbook semantic index healthy and up to date? Index health, count/coverage, quality, and usage. Audience: operations + knowledge base owner.",
+  "uid": "personal-agent-kit-memory",
+  "version": 1,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "schemaVersion": 36,
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 100,
+      "title": "Index health",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 1,
+      "title": "Qdrant",
+      "description": "Semantic memory engine status. DOWN = symptom-based semantic search is lost (falls back to manual reading). Alerts via qdrant_health_check.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(time() - max(memory_last_run_timestamp_seconds)) < bool 300",
+          "legendFormat": "qdrant",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "noValue": "No scrape",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 2,
+      "title": "Indexed vectors",
+      "description": "Total searchable fragments in Qdrant (runbooks split into chunks).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_index_chunks_total)",
+          "legendFormat": "vectors",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No data",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 3,
+      "title": "Index freshness",
+      "description": "Time since the last re-index. With the hourly cron this should be < 1h. Green < 90 min · Red > 3h (something failed).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max(memory_index_last_run_timestamp_seconds)",
+          "legendFormat": "freshness",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "Not indexed yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5400
+              },
+              {
+                "color": "red",
+                "value": 10800
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 4,
+      "title": "Last indexing run",
+      "description": "Result of the last re-indexing run.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_index_last_run_success)",
+          "legendFormat": "status",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "0": {
+                  "text": "FAILED",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 300,
+      "title": "Quality",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 8,
+      "title": "Depth — chunks per doc",
+      "description": "Average fragments per doc. Very low (< 4) suggests poor/incomplete docs; healthy ≈ 8-15 sections.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_index_avg_chunks_per_doc)",
+          "legendFormat": "chunks/doc",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "noValue": "No data",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 4
+              },
+              {
+                "color": "green",
+                "value": 8
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 9,
+      "title": "Indexed docs",
+      "description": "Difference between vectors in Qdrant and chunks from the last indexing run. Sustained ≠ 0 = index out of sync (deleted docs or a stale index).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_index_docs_total)",
+          "legendFormat": "runbooks",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No data",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 7,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 10,
+      "title": "Indexing duration",
+      "description": "How long re-indexing takes (embeddings + upsert). Growth = the KB is growing or the model is slowing down.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max(memory_index_run_duration_seconds)",
+          "legendFormat": "duration"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "decimals": 1,
+          "noValue": "No runs yet",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 6
+      }
+    },
+    {
+      "id": 400,
+      "title": "Usage",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 12,
+      "title": "Hit rate",
+      "description": "% of searches that found a result above the threshold. Low = the KB doesn't cover the real symptoms (missing docs) or the threshold is too high.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(100 * max(memory_search_hits_total) / clamp_min(max(memory_searches_total), 1)) or vector(0)",
+          "legendFormat": "hit rate",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 0,
+          "noValue": "No searches yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "green",
+                "value": 60
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 14,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 600,
+      "title": "Personalization (memory)",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 601,
+      "title": "Shared memory (business core)",
+      "description": "scope=shared memories: corporate colors, security standards, conventions. Seen by the whole team.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_entries{scope=\"shared\"}) or vector(0)",
+          "legendFormat": "shared",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 602,
+      "title": "Per-user memory",
+      "description": "scope=user memories: each person's own way of working. Sum across all users.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_entries{scope=\"user\"}) or vector(0)",
+          "legendFormat": "per user",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 603,
+      "title": "Total memories",
+      "description": "Total entries in agent_memory (shared + across all users).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(memory_entries) or vector(0)",
+          "legendFormat": "total",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 604,
+      "title": "Memories by scope",
+      "description": "Distribution: shared (business) vs. per-user (individual personalization).",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "max by (scope) (memory_entries)",
+          "legendFormat": "{{scope}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No memories yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 605,
+      "title": "Writes (since startup)",
+      "description": "memory.py add calls served by the service since its last startup (the counter resets with the service; the real total is 'Total memories').",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_writes_total) or vector(0)",
+          "legendFormat": "writes",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 606,
+      "title": "Memory searches",
+      "description": "Personalization lookups at the start of each interaction (since the service started).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_searches_total) or vector(0)",
+          "legendFormat": "searches",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 607,
+      "title": "Memory hit rate",
+      "description": "Percentage of searches that returned ≥1 relevant memory.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(memory_hit_rate) * 100",
+          "legendFormat": "hit rate",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "decimals": 0,
+          "noValue": "No searches yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 608,
+      "title": "Memory service (heartbeat)",
+      "description": "Time since the memory service's last heartbeat (pushes metrics every 60s). Green = alive and reporting; yellow = 2-3 missed heartbeats; red = no signal, the service is likely down.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max(memory_last_run_timestamp_seconds)",
+          "legendFormat": "last signal",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "noValue": "No signal",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 150
+              },
+              {
+                "color": "red",
+                "value": 300
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 20,
+        "w": 6,
+        "h": 5
+      }
+    }
+  ]
+}

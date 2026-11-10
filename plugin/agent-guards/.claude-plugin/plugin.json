@@ -1,0 +1,8 @@
+{
+  "name": "agent-guards",
+  "description": "Security guardrails (rm -rf, secrets/syntax on write) and BMAD/FastAPI skills for personal-agent-kit, packaged as this repo's own plugin (tested locally with --plugin-dir) — not distributed to other projects.",
+  "version": "0.1.0",
+  "author": {
+    "name": "personal-agent-kit"
+  }
+}

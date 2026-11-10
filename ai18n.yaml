@@ -1,0 +1,26 @@
+---
+# ai18n.yaml: the languages of this repo for any AI, in ONE place, following the ai18n standard
+# (https://github.com/JuanVilla424/ai18n, vendored as the helpers/ai18n submodule).
+#
+# Agents get it normalized by helpers/ai18n/src/ai18n.py, never raw: Claude Code through
+# .claude/hooks/session-start.sh, OpenCode through bin/opencode/build-config.sh. If any other file
+# says something else (BMAD config, a persona, an old protocol), this file wins.
+#
+# respond and speak are the conversation languages: `bash bin/install.sh --language es` sets them.
+# The repo itself stays in English. Resolve one file with:
+#   .venv/bin/python3 helpers/ai18n/src/ai18n.py resolve <path>
+
+ai18n: 1
+respond: en
+speak: en
+document: en
+code: en
+instruct: en
+ui: delegate
+default: en
+
+paths:
+  - match: ["**/SKILL.md", "**/skills/**"]
+    surface: instruct
+  - match: ["local/scripts/notify/core/i18n.py", ".claude/hooks/persona.md"]
+    language: preserve

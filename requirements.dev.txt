@@ -1,0 +1,50 @@
+# Pre-Commit for pre-commit hooks management
+pre-commit>=4.0.0
+
+# Black for code formatting
+black>=24.3.0
+
+# Pylint for python lint
+pylint>=3.3.1
+
+# Pyright for static type checking / LSP backend (uses [tool.pyright] in pyproject.toml)
+pyright>=1.1.350
+
+# Pytest for unit/integration testing
+pytest>=7.3.1
+pytest-cov>=4.0.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.12.0
+aiosqlite>=0.20.0
+
+# HTTPx for FastAPI TestClient
+httpx>=0.27.0
+
+# Coverage reporting
+coverage>=7.2.5
+
+# Bump2Version for version release control
+bump2version==1.0.0
+
+# Toml for pyproject.toml management
+toml>=0.10.1
+
+# Playwright for E2E browser testing (panel HTML)
+pytest-playwright>=0.5.0
+
+# ── Runtime libs needed to import/exercise bot, metrics and report modules in tests ──
+slack-bolt>=1.18.0          # Slack bot runtime (bot.py)
+slack-sdk>=3.21.0           # Slack web client + error types (ui/, bot)
+prometheus-client>=0.17.0   # metrics registry (ops/metrics*.py, memory_index/main.py)
+openpyxl>=3.1.0             # excel_report_generator/generator.py
+reportlab>=4.0.0            # pdf_report_generator/generator.py
+aiohttp>=3.9.0             # slack_bolt socket-mode adapter (bot)
+fastapi>=0.110.0           # memory_service + ops/health_endpoint
+uvicorn>=0.27.0            # memory_service + ops/health_endpoint
+qdrant-client>=1.7.0       # memory_index (main.py, memory_service.py)
+fastembed>=0.4.0           # memory_index embeddings (main.py, memory_service.py)
+requests>=2.31.0           # memory_index client (memory.py, seed_memory.py)
+PyYAML>=6.0                # security/permissions config
+
+# Tiktoken for real token counting (bin/count_tokens.py — MODELS.md footprint, replaces bytes/4)
+tiktoken>=0.7.0

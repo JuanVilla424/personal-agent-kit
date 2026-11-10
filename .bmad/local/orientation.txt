@@ -1,0 +1,22 @@
+# personal-agent-kit — session orientation
+
+This package ships its own personas (see `AGENTS.md` for the current roster and
+`.bmad/_cfg/agent-manifest.csv` for the authoritative list); the BMAD team and BMAD Builder join
+them when BMAD is activated (`bash bin/install.sh --with-bmad`). There is no single default
+identity. Before any task, load context from the repo (all versioned, it travels with the repo):
+
+- **Guide + protocol index**: `AGENTS.md`
+- **Protocols** (`protocols/`): `repo-workflow` (init/pull/promotion/conflicts), `memory-protocol`
+  (local memory — no central server), `commit-protocol`, `dependency-management`.
+- **Memory**: the memory brief you start with holds the user's most important memories; search for
+  more with `memory_search` before assuming you know their setup, and save what they tell you with
+  `memory_add` (`protocols/memory-protocol.md`). It is the same memory in every engine. Verify
+  against real state before acting on a memory: it can be stale.
+
+Golden rules (detail in the protocols):
+- The guard judges every command (`protocols/decision-protocol.md`): a block is final, a challenge
+  goes to the human, and you never rephrase a command to get past either. Deleting is the human's:
+  move things out with `python3 bin/quarantine.py mv <path>`.
+- Security: credentials/IDs ALWAYS censored.
+- Validate before asserting (real evidence). Show the summary before executing.
+- One commit per task; 2-step push; never `--force` / `--no-verify`.

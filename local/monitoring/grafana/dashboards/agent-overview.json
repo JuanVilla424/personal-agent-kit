@@ -1,0 +1,541 @@
+{
+  "title": "Personal Agent Kit Overview — Coverage",
+  "description": "Is the agent healthy, and how fresh is each telemetry source? Audience: anyone on the team, first glance. Targets, host, freshness by domain, active alerts, and usage by agent.",
+  "uid": "personal-agent-kit-overview",
+  "version": 6,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "schemaVersion": 36,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 100,
+      "title": "Overall status",
+      "description": "Alerts firing right now across the whole stack (source: Grafana alerting). Green = nothing needs action.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(grafana_alerting_active_alerts) or vector(0)",
+          "legendFormat": "status",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "suffix: active alerts",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "ALL HEALTHY",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "links": [
+        {
+          "title": "View alerts",
+          "url": "/alerting/list"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      }
+    },
+    {
+      "id": 1,
+      "title": "Sources (targets)",
+      "description": "Status of each scraped source. Everything should say UP; DOWN triggers the TargetDown alert.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max by (job) (up)",
+          "legendFormat": "{{job}}",
+          "instant": false
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                },
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "id": 2,
+      "title": "Bot Uptime",
+      "description": "Time since the Slack bot's last restart. A small value indicates a recent restart.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(bot_uptime_seconds)",
+          "legendFormat": "uptime"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "yellow",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 3600
+              }
+            ]
+          },
+          "noValue": "Bot down"
+        }
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 5
+      },
+      "links": [
+        {
+          "title": "View bot board",
+          "url": "/d/slack-bot-v1/"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Bot users (24h)",
+      "description": "Distinct people who used the bot via Slack in the last 24h.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(sum by (user_id) (increase(bot_user_requests_total[24h]))) or vector(0)",
+          "legendFormat": "users"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 4,
+        "h": 5
+      },
+      "links": [
+        {
+          "title": "View usage board",
+          "url": "/d/personal-agent-kit-usage/"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Hosts reporting",
+      "description": "Hosts with the agent sending metrics to this Prometheus.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(group by (instance) (node_load1))",
+          "legendFormat": "hosts"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 4,
+        "h": 5
+      },
+      "links": [
+        {
+          "title": "View usage board",
+          "url": "/d/personal-agent-kit-usage/"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Bot queries (24h)",
+      "description": "Total messages received by the bot in the last 24h.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(bot_messages_received_total[24h])) or vector(0)",
+          "legendFormat": "queries"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        }
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 3,
+        "w": 4,
+        "h": 5
+      },
+      "links": [
+        {
+          "title": "View bot board",
+          "url": "/d/slack-bot-v1/"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Host CPU %",
+      "description": "Agent server's CPU (agent-host). Alerts at a sustained 90%.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "legendFormat": "cpu"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "spanNulls": true,
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 6
+      },
+      "links": [
+        {
+          "title": "View host board",
+          "url": "/d/personal-agent-kit-host/"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Host RAM used %",
+      "description": "Agent server's memory. Alerts at a sustained 90%.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+          "legendFormat": "ram"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "never",
+            "spanNulls": true,
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 6
+      },
+      "links": [
+        {
+          "title": "View host board",
+          "url": "/d/personal-agent-kit-host/"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Active alerts",
+      "description": "Alerts firing or pending right now. Empty = everything healthy.",
+      "type": "alertlist",
+      "options": {
+        "maxItems": 20,
+        "stateFilter": {
+          "firing": true,
+          "pending": true,
+          "noData": false,
+          "normal": false,
+          "error": true
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {}
+      }
+    },
+    {
+      "id": 12,
+      "title": "Usage by agent (24h)",
+      "description": "Queries served by each agent in the last 24h.",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sum by (agent) (increase(claude_code_agent_turns_total[24h]))",
+          "legendFormat": "{{agent}}"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No queries yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 6
+      },
+      "links": [
+        {
+          "title": "View agents board",
+          "url": "/d/personal-agent-kit-agents/"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# bin/pak — the kit's command line: `pak doctor`, `pak guard`, `pak memory`, `pak task`…
+# The installer links it as ~/.local/bin/pak; it finds its repository through the link.
+set -euo pipefail
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+PY="$HERE/../.venv/bin/python3"
+[ -x "$PY" ] || PY="$(command -v python3)"
+exec "$PY" "$HERE/pak_cli.py" "$@"

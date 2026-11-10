@@ -1,0 +1,208 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    ".bmad/local/orientation.txt",
+    "protocols/decision-protocol.md",
+    "protocols/memory-protocol.md",
+    "protocols/commit-protocol.md"
+  ],
+  "mcp": {
+    "context7": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--browserUrl",
+        "http://127.0.0.1:9222"
+      ],
+      "enabled": true
+    }
+  },
+  "provider": {
+    "custom": {
+      "name": "Custom Provider",
+      "npm": "@ai-sdk/openai-compatible",
+      "models": {
+        "standard": {
+          "options": {
+            "reasoningEffort": "high"
+          }
+        },
+        "extended": {
+          "options": {
+            "reasoningEffort": "high"
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 131072
+          }
+        }
+      },
+      "options": {
+        "apiKey": "{env:CUSTOM_API_KEY}",
+        "baseURL": "{env:CUSTOM_PROVIDER_BASE_URL}"
+      }
+    },
+    "zai": {
+      "name": "Z.AI GLM Coding Plan",
+      "npm": "@ai-sdk/openai-compatible",
+      "models": {
+        "glm-5.2": {
+          "name": "GLM-5.2"
+        }
+      },
+      "options": {
+        "apiKey": "{env:ZAI_API_KEY}",
+        "baseURL": "https://api.z.ai/api/coding/paas/v4"
+      }
+    }
+  },
+  "agent": {
+    "infra-agent": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Kai | Kai 🔧 - Infrastructure | ci/cd, pipeline, docker, kubernetes, deploy, terraform, ansible, nginx, helm, grafana, prometheus, linux"
+    },
+    "security-agent": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Raven | Raven 🛡️ - Cybersecurity | security, vuln, vulnerability, owasp, pentest, compliance, iam, soc2, audit, threat"
+    },
+    "reports-agent": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Iris | Iris 📊 - Reports | report, excel, xlsx, pdf, generate, format"
+    },
+    "bmad-master": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "BMad | BMad Master 🧙 - Orchestrator | help, menu, workflows, route, orchestrate, team, agents"
+    },
+    "architect": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Winston | Winston 🏗️ - Architect | architecture, design, system, distributed, api, diagram, excalidraw, tech-spec"
+    },
+    "analyst": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Mary | Mary 📊 - Business Analyst | requirements, research, brief, prd, brainstorm, market, analysis"
+    },
+    "pm": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "John | John 📋 - Product Manager | product, prd, epics, stories, roadmap, MVP, stakeholder"
+    },
+    "sm": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Bob | Bob 🏃 - Scrum Master | scrum, sprint, story, agile, retrospective, planning, backlog"
+    },
+    "dev": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Amelia | Amelia 💻 - Developer | develop, code, implement, story, TDD, tests, refactor, bug, feature"
+    },
+    "tea": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Murat | Murat 🧪 - Test Architect | tests, testing, QA, coverage, e2e, playwright, cypress, CI, quality"
+    },
+    "tech-writer": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Paige | Paige 📚 - Tech Writer | docs, documentation, readme, mermaid, diagram, flowchart, explain"
+    },
+    "ux-designer": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Sally | Sally 🎨 - UX Designer | ux, ui, design, wireframe, user, experience, prototype, excalidraw"
+    },
+    "quick-flow": {
+      "model": "custom/extended",
+      "prompt": "",
+      "description": "Barry | Barry 🚀 - Quick Flow Solo Dev | quick, solo, fast, ship, tech-spec, implement, full-stack"
+    },
+    "database": {
+      "description": "Elena | Elena 🗄️ - Database Architect | oracle, postgresql, mongodb, rds, database, performance, tuning, index, query, sql, data modeling, replication, migration, schema",
+      "model": "custom/extended",
+      "prompt": ""
+    }
+  },
+  "default_agent": "bmad-master",
+  "lsp": {
+    "pyright": {
+      "command": [
+        "pyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ]
+    },
+    "typescript": {
+      "command": [
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs",
+        ".vue"
+      ]
+    },
+    "rust-analyzer": {
+      "command": [
+        "rust-analyzer"
+      ],
+      "extensions": [
+        ".rs"
+      ]
+    },
+    "gopls": {
+      "command": [
+        "gopls"
+      ],
+      "extensions": [
+        ".go"
+      ]
+    },
+    "clangd": {
+      "command": [
+        "clangd"
+      ],
+      "extensions": [
+        ".c",
+        ".h",
+        ".cpp",
+        ".hpp",
+        ".cc",
+        ".cxx"
+      ]
+    }
+  }
+}

@@ -1,0 +1,335 @@
+{
+  "title": "Personal Agent Kit Scripts & Reports",
+  "description": "Which tools have run, when, and with what result? Live inventory: any new source reporting to the stack shows up here on its own. Audience: operations.",
+  "uid": "personal-agent-kit-scripts",
+  "version": 4,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "schemaVersion": 36,
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Live inventory — freshness of ALL jobs",
+      "description": "Every source reporting to the stack shows up here automatically with the time since its last run. Green < 2 days · Yellow < 8 days.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max by (job, account, resource, invoked_by, host) ({__name__=~\".+_last_run_timestamp_seconds\"})",
+          "legendFormat": "{{job}} · {{account}} {{resource}} ({{invoked_by}}@{{host}})",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 172800
+              },
+              {
+                "color": "text",
+                "value": 691200
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "id": 4,
+      "title": "Reports (Excel/PDF) — freshness",
+      "description": "Last corporate report generation run (Iris).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max(excel_report_last_run_timestamp_seconds)",
+          "legendFormat": "excel",
+          "instant": true
+        },
+        {
+          "expr": "time() - max(pdf_report_last_run_timestamp_seconds)",
+          "legendFormat": "pdf",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 5,
+      "title": "Memory Index — freshness",
+      "description": "Last semantic index run (Qdrant).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - max(memory_index_last_run_timestamp_seconds)",
+          "legendFormat": "index",
+          "instant": true
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 0,
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 6,
+        "w": 6,
+        "h": 5
+      }
+    },
+    {
+      "id": 6,
+      "title": "Generated report size",
+      "description": "Bytes of the last Excel/PDF produced. Sharp drops can indicate incomplete specs.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max(excel_report_output_bytes) or vector(0)",
+          "legendFormat": "excel"
+        },
+        {
+          "expr": "max(pdf_report_output_bytes) or vector(0)",
+          "legendFormat": "pdf"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "noValue": "No runs yet",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "id": 7,
+      "title": "Run duration (all scripts)",
+      "description": "How long each tool takes. Sustained growth = worth reviewing.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max by (job, account, resource) ({__name__=~\".+_run_duration_seconds\"})",
+          "legendFormat": "{{job}} · {{account}} {{resource}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "decimals": 0,
+          "noValue": "No runs yet",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "id": 8,
+      "title": "Last-run success (all jobs)",
+      "description": "OK/FAILED for each tool's most recent run.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max by (job, account, resource) ({__name__=~\".+_last_run_success\"})",
+          "legendFormat": "{{job}} · {{account}} {{resource}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {
+          "titleSize": 12,
+          "valueSize": 22
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "0": {
+                  "text": "FAILED",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "noValue": "No runs yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 5
+      }
+    }
+  ]
+}

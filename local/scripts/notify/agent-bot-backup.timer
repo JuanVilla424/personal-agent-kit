@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily backup timer for slack bot
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+Unit=agent-bot-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Alert handler — agent-bot failure
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit/local/scripts/notify
+EnvironmentFile=/home/<user>/personal-agent-kit/local/scripts/notify/.env
+ExecStart=/home/<user>/personal-agent-kit/local/scripts/notify/venv/bin/python3 -c "\
+import sys; sys.path.insert(0, '.'); \
+from notify import notify; \
+notify(level='critical', subject='agent-bot DOWN', \
+message='The bot failed more than 3 times in 5 min. Check: sudo journalctl -u agent-bot-blue -n 50')"
+StandardOutput=journal
+StandardError=journal

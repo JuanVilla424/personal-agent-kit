@@ -1,0 +1,10 @@
+[Unit]
+Description=Personal Agent Kit memory consolidation (near-duplicates marked replaced, nothing deleted)
+After=agent-memory.service
+Requires=agent-memory.service
+
+[Service]
+Type=oneshot
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit
+ExecStart=/home/<user>/personal-agent-kit/.venv/bin/python3 /home/<user>/personal-agent-kit/local/scripts/memory_index/memory.py consolidate

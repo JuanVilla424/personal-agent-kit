@@ -1,0 +1,52 @@
+---
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Slack bot exporter (local/scripts/notify/ops/metrics.py, host port 9090)
+  - job_name: slack-bot
+    static_configs:
+      - targets: ["host.docker.internal:9090"]
+        labels:
+          service: agent-bot
+          host: agent-host
+
+  # Pushgateway: one-shot scripts (diag, monitor) push here at end of run.
+  # honor_labels keeps the pushed grouping labels (host, invoked_by, account).
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+        labels:
+          service: pushgateway
+
+  # Host metrics (CPU, memory, disk, network)
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          service: node
+          host: agent-host
+
+  # Grafana self-metrics (active alerts feed the Overview status banner)
+  - job_name: grafana
+    static_configs:
+      - targets: ["grafana:3000"]
+        labels:
+          service: grafana
+          host: agent-host
+
+  # Qdrant — semantic memory (lessons index). Native /metrics.
+  # Reached over the joined memory_index_default network by container DNS name.
+  - job_name: qdrant
+    static_configs:
+      - targets: ["memory-qdrant:6333"]
+        labels:
+          service: qdrant
+          host: agent-host

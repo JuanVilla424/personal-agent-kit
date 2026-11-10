@@ -1,0 +1,17 @@
+[Unit]
+Description=Personal Agent Kit memory service (Qdrant single writer)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit
+# config.py loads the root .env via python-dotenv (handles quotes); we don't use
+# EnvironmentFile to avoid systemd's own parser choking on values with spaces.
+ExecStart=/home/<user>/personal-agent-kit/.venv/bin/python3 /home/<user>/personal-agent-kit/local/scripts/memory_index/memory_service.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Watchdog timer for slack bot blue/green swap
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+Unit=agent-bot-watchdog.service
+
+[Install]
+WantedBy=timers.target

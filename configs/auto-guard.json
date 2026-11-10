@@ -1,0 +1,7 @@
+{
+  "_comment": "Settings of the shared guard (bin/auto_guard.py). auto_approve.enabled: false means every challenge asks the human; true lets challenges pass and logs them in logs/auto_guard_log.jsonl with severity auto_approved. A block is never approved. applies_to: add \"engine_unavailable\" only if a failed evaluation should pass too, which is fail-open. Only the human edits this file: the guard blocks agents from changing it.",
+  "auto_approve": {
+    "enabled": false,
+    "applies_to": ["challenge"]
+  }
+}

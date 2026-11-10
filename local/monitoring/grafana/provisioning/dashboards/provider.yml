@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: personal-agent-kit
+    folder: Personal Agent Kit
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

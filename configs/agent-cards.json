@@ -1,0 +1,25 @@
+{
+  "_comment": "The personas route_agent chooses from (bin/decision_integrations.py). Keep it in step with AGENTS.md and bin/opencode/opencode.base.json.",
+  "agents": {
+    "raven": {
+      "opencode_agent": "security-agent",
+      "label": "Raven, cybersecurity specialist",
+      "intents": ["security review", "threat modeling", "vulnerability assessment"]
+    },
+    "elena": {
+      "opencode_agent": "database",
+      "label": "Elena, database architect",
+      "intents": ["schema design", "query tuning", "data modeling"]
+    },
+    "kai": {
+      "opencode_agent": "infra-agent",
+      "label": "Kai, infrastructure and DevOps engineer",
+      "intents": ["CI/CD", "containers", "automation"]
+    },
+    "iris": {
+      "opencode_agent": "reports-agent",
+      "label": "Iris, report generation specialist",
+      "intents": ["Excel reports", "PDF reports"]
+    }
+  }
+}

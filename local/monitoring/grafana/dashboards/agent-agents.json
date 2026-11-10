@@ -1,0 +1,212 @@
+{
+  "title": "Personal Agent Kit BMAD Agents — Slack and sessions",
+  "description": "Which BMAD agents did you talk to, and through which path? Sessions: agents detected per turn from the transcript (Sally, Kai, Winston… multi-agent party-mode included). Slack: bot routing.",
+  "uid": "personal-agent-kit-agents",
+  "version": 6,
+  "tags": [
+    "personal-agent-kit"
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "personal-agent-kit"
+      ],
+      "asDropdown": true,
+      "title": "Boards",
+      "keepTime": true,
+      "includeVars": false
+    }
+  ],
+  "schemaVersion": 36,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Activity by agent (hourly)",
+      "description": "Each BMAD agent's work per hour, across both paths: Slack queries (bot) and Claude Code session turns. Hourly scale because activity is sparse.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (agent) (increase(bot_agent_requests_total[1h]))",
+          "legendFormat": "{{agent}} · slack"
+        },
+        {
+          "expr": "sum by (agent) (increase(claude_code_agent_turns_total[1h]))",
+          "legendFormat": "{{agent}} · session"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: /h",
+          "min": 0,
+          "decimals": 0,
+          "noValue": "No queries yet",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "showPoints": "always",
+            "pointSize": 4,
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "gradientMode": "opacity"
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 2,
+      "title": "Activity by agent (24h)",
+      "description": "Which agent is used most during the day — Slack and sessions shown separately.",
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sum by (agent) (increase(bot_agent_requests_total[24h]))",
+          "legendFormat": "{{agent}} · slack"
+        },
+        {
+          "expr": "sum by (agent) (increase(claude_code_agent_turns_total[24h]))",
+          "legendFormat": "{{agent}} · session"
+        }
+      ],
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No queries yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 3,
+      "title": "Total by agent",
+      "description": "Slack: cumulative since the bot's last restart. Sessions: persistent cumulative count from the hook (survives restarts).",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (agent) (bot_agent_requests_total)",
+          "legendFormat": "{{agent}} · slack"
+        },
+        {
+          "expr": "sum by (agent) (claude_code_agent_turns_total)",
+          "legendFormat": "{{agent}} · session"
+        }
+      ],
+      "options": {
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {
+          "valueSize": 24
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "No queries yet",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 5
+      }
+    },
+    {
+      "id": 4,
+      "title": "Active agents (24h)",
+      "description": "How many distinct agents worked today, via either path.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(sum by (agent) (increase(bot_agent_requests_total[24h])) or sum by (agent) (increase(claude_code_agent_turns_total[24h]))) or vector(0)",
+          "legendFormat": "agents"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 5
+      }
+    }
+  ]
+}

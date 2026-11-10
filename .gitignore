@@ -1,0 +1,118 @@
+# Personal Agent Kit - Git Ignore Patterns
+
+# Credentials
+.aws/
+credentials
+*.pem
+*.key
+*.crt
+
+# Temporary and log files
+temp/*.log
+temp/*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+
+# Node
+node_modules/
+package-lock.json
+
+# Environment
+.env
+.env.local
+
+# Personal persona for the TTS hook (Story B) — never committed, see persona.md
+.claude/hooks/persona.local.md
+
+# Backups
+*.bak
+*.backup
+
+# Secrets
+secrets/
+keys/
+
+# AI reserved files
+CLAUDE.md
+CONTEXT.md
+MEMORY.md
+TASKS.md
+memory/
+
+# BMAD external framework (not ours)
+bmad-src/
+bmad-custom-src/
+bmad-src/temp/
+
+# Python environments (all levels)
+venv/
+**/venv/
+ENV/
+.venv/
+
+# Logs (all levels)
+logs/
+*.log
+**/*.log
+
+# Temp
+temp/
+nul
+
+# Environment files (all levels — credentials)
+**/.env
+**/.env.local
+
+# Claude Code session data
+.ai/
+# Ignore .claude/ session data EXCEPT the bmad slash-commands, which are versioned
+# so a fresh clone/install carries them (they were missing otherwise).
+.claude/*
+!.claude/commands/
+!.claude/hooks/
+!.claude/agents/
+!.claude/skills/
+!.claude/scripts/
+# Personal files that live next to the shared ones but are never committed.
+.claude/skills/mi-skill-personal/
+.claude/commands/mi-command-personal.md
+.claude/agents/mi-agent-personal.md
+# BMAD is opt-in: setup_bmad (bin/_lib.sh) copies these from .bmad/integrations/claude/.
+.claude/commands/bmad/
+.claude/agents/bmad-*/
+.claude/projects/
+.claude/plans/
+.claude/cache/
+.claude/todos/
+
+# Pre-commit cache
+.pre-commit-cache/
+
+# Runtime data
+local/scripts/notify/data/
+local/scripts/notify/audit/
+local/scripts/notify/tasks.json
+
+# Memory index — fastembed model cache and local runtime data
+local/scripts/memory_index/.cache/
+local/scripts/memory_index/logs/
+local/scripts/memory_index/.metrics-state/
+
+# Reports PDF
+docs/*.pdf

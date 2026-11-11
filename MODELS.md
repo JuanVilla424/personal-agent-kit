@@ -9,6 +9,15 @@
 > proxy for Claude (~±10%); exact-Claude counts require the `count_tokens` API (needs a key, not
 > available here).
 
+## 📚 Table of Contents
+
+- [1. Agent Footprint](#-1-agent-footprint--by-layer-token-map)
+- [2. Models](#-2-models--capacity-and-benchmark)
+- [Output Language](#-output-language)
+- [3. Defaults by Scenario](#-3-defaults-by-scenario)
+- [Findings & Roadmap](#️-findings--roadmap)
+- [License](#-license)
+
 ---
 
 ## 📊 1. Agent footprint — by layer (token map)
@@ -158,3 +167,10 @@ defaults, not benchmark winners.
   BMAD personas (Kai/Raven/Elena/Iris) actually responding in the user's configured language,
   rather than keeping their Spanish-authored tone/verbal_tics/voice as fixed character design —
   is future work, not yet started.
+
+---
+
+## 📜 License
+
+2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
+included in this repository.

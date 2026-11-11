@@ -1,8 +1,10 @@
 # 🧠 Personal Agent Kit
 
+![CI/CD](https://img.shields.io/badge/CI/CD-Pipeline-blue)
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Build Status](https://github.com/JuanVilla424/personal-agent-kit/actions/workflows/ci.yml/badge.svg?branch=dev)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 
@@ -17,16 +19,19 @@ It runs as your own user, from wherever you clone it. It creates no Linux user.
 ## 📚 Table of Contents
 
 - [Features](#-features)
+- [Agents](#-agents-persona--opencode)
 - [Getting Started](#-getting-started)
   - [Prerequisites](#-prerequisites)
   - [Installation](#-installation)
-  - [Environment Setup](#-environment-setup)
+  - [Language](#️-language)
   - [Pre-Commit Hooks](#-pre-commit-hooks)
-  - [Extra Steps](#-extra-steps)
-- [Usage](#-usage)
+  - [Slack Bot](#-slack-bot-optional)
+- [Usage](#️-usage)
+- [Monitoring Stack](#-monitoring-stack)
 - [Contributing](#-contributing)
-- [License](#-license)
+  - [Creating a New Agent](#️-creating-a-new-agent)
 - [Contact](#-contact)
+- [License](#-license)
 
 ## 🌟 Features
 
@@ -112,7 +117,7 @@ always there; the rest need `--with-bmad`, which also makes `bmad-master` the de
 - **An AI provider:** a Claude account or API key for Claude Code, and/or an OpenAI-compatible
   endpoint for OpenCode.
 - **For `pak task`:** Docker (the installer sets it up) and `ANTHROPIC_API_KEY` or
-  `CLAUDE_CODE_OAUTH_TOKEN`. See [INSTALL.md](INSTALL.md#the-autonomous-worker-pak-task).
+  `CLAUDE_CODE_OAUTH_TOKEN`. See [INSTALL.md](INSTALL.md#-the-autonomous-worker-pak-task).
 
 ### 🔨 Installation
 
@@ -153,20 +158,22 @@ in `SLACK_CHANNEL_IDS`, and nobody while either is empty.
 
 **To use this kit, follow these steps**:
 
-0. **Check every layer**: `pak doctor`. `pak guard "<command>"` judges a command, `pak memory
-search "<question>"` searches the memory, and `pak task add "<task>" --repo <path>` followed by
-   `pak task run` hands a task to the autonomous worker, which runs it in a container and returns
-   a reviewed patch, never a commit. `pak snapshot list` and `pak snapshot restore <id>` bring back
-   a copy of the repository from before a session or a challenge.
+1. **Check every layer:** `pak doctor`.
+   - `pak guard "<command>"` judges a command, and `pak memory search "<question>"` searches the
+     memory.
+   - `pak task add "<task>" --repo <path>` followed by `pak task run` hands a task to the
+     autonomous worker, which runs it in a container and returns a reviewed patch, never a commit.
+   - `pak snapshot list` and `pak snapshot restore <id>` bring back a copy of the repository from
+     before a session or a challenge.
 
-1. **Open in the AI tool**
+2. **Open in the AI tool**
    - Open the `personal-agent-kit` directory in Claude Code or OpenCode.
    - With BMAD active, Party Mode engages the whole team:
      ```
      /bmad:core:workflows:party-mode
      ```
 
-2. **Version Bumping**
+3. **Version Bumping**
    - Add `[patch candidate]`, `[minor candidate]`, or `[major candidate]` to your commit message
      to trigger a version bump.
    - The pre-push hooks automatically bump the version in `pyproject.toml` and
@@ -207,8 +214,9 @@ Work happens on the `dev` branch:
    .venv/bin/pre-commit run --all-files
    ```
 
-Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and the
-[Contribution Guidelines](CONTRIBUTING.md).
+[DEVELOPMENT.md](DEVELOPMENT.md) has the whole development loop and every check, and
+[ARCHITECTURE.md](ARCHITECTURE.md) how the parts fit together. Please follow the
+[Code of Conduct](CODE_OF_CONDUCT.md) and the [Contribution Guidelines](CONTRIBUTING.md).
 
 ### 🛠️ Creating a New Agent
 
@@ -226,7 +234,7 @@ Don't hand-edit persona files. Activate BMAD (`bash bin/install.sh --with-bmad`)
 
 ## 📫 Contact
 
-For any inquiries or support, please open an issue or contact [contact@example.com](mailto:contact@example.com).
+For any inquiries or support, please open an issue or contact [r6ty5r296it6tl4eg5m.constant214@passinbox.com](mailto:r6ty5r296it6tl4eg5m.constant214@passinbox.com).
 
 ---
 

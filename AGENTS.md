@@ -3,6 +3,22 @@
 > Reference guide for any agent working in this repository.
 > Read this file **in full** before modifying anything.
 
+## 📚 Table of Contents
+
+- [Project Structure](#-project-structure)
+- [Initial Project Setup](#️-initial-project-setup)
+- [Required Environment Variables](#️-required-environment-variables)
+- [Brain State](#-brain-state--check-before-a-task)
+- [Canonical Protocols](#-canonical-protocols-required-reading)
+- [Slack Bot](#-slack-bot)
+- [Tests](#-tests)
+- [Versioning](#-versioning)
+- [Absolute Rules](#-absolute-rules)
+- [Checklist Before Committing](#-checklist-before-committing)
+- [Commit Convention](#-commit-convention)
+- [Documentation](#-documentation)
+- [License](#-license)
+
 ---
 
 ## 📁 Project structure
@@ -69,13 +85,13 @@ pre-commit run --all-files
 > The hooks include: `black`, `pylint`, `yaml-format`, `yml-format`,
 > `bump-year`, `generate-changelog`, `validate-commit`, `commit-msg-version-check`.
 
-### `scripts/`
+### 🧰 `scripts/`
 
 The `scripts/` directory holds the tools the pre-commit hooks run (format_yaml, format_yml,
 bump_year, generate_changelog, control_commit, commit_msg_version_bump). They are regular files of
 this repo: edit them here, with their tests in `scripts/tests/`. See `scripts/README.md`.
 
-### Submodules
+### 🧩 Submodules
 
 `helpers/ai18n` and `local/scripts/chatterbox-tts-server` are submodules, pinned to exact commits.
 
@@ -93,7 +109,7 @@ git submodule update --remote helpers/ai18n && git add helpers/ai18n
 
 ## ⚙️ Required environment variables
 
-### Slack bot (`local/scripts/notify/.env`)
+### 💬 Slack bot (`local/scripts/notify/.env`)
 
 ```bash
 cp local/scripts/notify/.env.template local/scripts/notify/.env
@@ -173,7 +189,7 @@ promotion only via PR with `[patch candidate]`.
 --with-slack` creates its venv and `.env`, and installs its units rendered for whoever installs
 > the kit; it starts them once the tokens are in `.env`.
 
-### Start / stop (systemd)
+### 🔁 Start / stop (systemd)
 
 ```bash
 # Status
@@ -189,7 +205,7 @@ sudo systemctl restart agent-bot-blue
 sudo journalctl -u agent-bot-blue -f
 ```
 
-### Install the service on a new machine
+### 🔨 Install the service on a new machine
 
 ```bash
 bash bin/install.sh --with-slack   # venv, .env (private) and the rendered units
@@ -219,7 +235,7 @@ sudo systemctl enable --now agent-bot.service agent-bot-watchdog.timer agent-bot
 
 ## 🔄 Versioning
 
-### Automatic version bump
+### 🔼 Automatic version bump
 
 The pre-push hooks bump the version in `pyproject.toml`/`.bumpversion.cfg` based on the
 keyword at the **end** of the commit message:
@@ -272,13 +288,13 @@ keyword at the **end** of the commit message:
 
 See `VERSIONING.md` for the full reference. Operational summary:
 
-### Structure
+### 🧱 Structure
 
 ```
 <type>(<scope>): <lowercase description> [versioning keyword]
 ```
 
-### Fixed rules for this project
+### 📌 Fixed rules for this project
 
 | Field             | Rule                                                        |
 | ----------------- | ----------------------------------------------------------- |
@@ -288,7 +304,7 @@ See `VERSIONING.md` for the full reference. Operational summary:
 | Co-Authored-By    | **NEVER**                                                   |
 | Number of commits | **ONE** per task — never multiple separate commits          |
 
-### Allowed types
+### 🔤 Allowed types
 
 | Type       | When to use it                                             |
 | ---------- | ---------------------------------------------------------- |
@@ -304,7 +320,7 @@ See `VERSIONING.md` for the full reference. Operational summary:
 > **Critical rule:** the type is determined by the **main purpose** of the change.
 > Tests that accompany a `feat` → `feat(core)`, not `test(core)`.
 
-### Versioning keywords
+### 🔑 Versioning keywords
 
 ```
 [patch candidate]   → bump PATCH (bug fixes, minor refactors)
@@ -312,7 +328,7 @@ See `VERSIONING.md` for the full reference. Operational summary:
 [major candidate]   → bump MAJOR (breaking changes)
 ```
 
-### Correct examples
+### ✅ Correct examples
 
 ```bash
 feat(core): add slack bot socket mode support [minor candidate]
@@ -323,7 +339,7 @@ chore(core): remove discord.py from requirements
 test(core): improve coverage for session manager
 ```
 
-### Incorrect examples ❌
+### ❌ Incorrect examples
 
 ```bash
 feat(bot): ...           # scope must be "core"
@@ -331,3 +347,42 @@ Fix(core): ...           # type in uppercase
 feat(core): Add Slack... # description in uppercase
 feat(core): add feature. # trailing period
 ```
+
+---
+
+## 📝 Documentation
+
+**Every document lives at the root of the repository and has one job**:
+
+| File                                                                    | What it holds                                                   |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `README.md`                                                             | What the kit is, its features, how to start and how to use it   |
+| `INSTALL.md`                                                            | Installation and configuration                                  |
+| `DEVELOPMENT.md`                                                        | The development loop: environment, checks, hooks, conventions   |
+| `ARCHITECTURE.md`                                                       | Components, data flow and the decisions behind them             |
+| `AGENTS.md`                                                             | This guide for AI agents                                        |
+| `MODELS.md`                                                             | Model capacity, cost and quality for the agent                  |
+| `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `VERSIONING.md` | How to contribute, behave, report a vulnerability and version   |
+| `CHANGELOG.md`                                                          | The changes of each version; `VERSIONING.md` says who writes it |
+
+**Write them in the house style of the
+[github-cicd-template](https://github.com/JuanVilla424/github-cicd-template) repositories**:
+
+1. **Title:** `# <emoji> <Title>`. The README follows it with a row of shields.io badges and a
+   short introduction.
+2. **Headings:** every `##` and `###` starts with one emoji that names the section.
+3. **Table of contents:** a document with more than a few sections opens with
+   `## 📚 Table of Contents`. A link keeps what the emoji leaves in GitHub's anchor: the dash, as
+   in `[Features](#-features)`, and the invisible U+FE0F of emojis such as 🛠️.
+4. **Lists and steps:** a bold lead-in ending with a colon introduces each list. Steps are
+   numbered and start with a bold title.
+5. **Closing:** a `---` rule, then `## 📜 License`; the README adds `## 📫 Contact` before it.
+6. **In sync:** a change in behavior updates its documents in the same commit. Prettier formats
+   every `.md` file in the pre-commit hook.
+
+---
+
+## 📜 License
+
+2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
+included in this repository.

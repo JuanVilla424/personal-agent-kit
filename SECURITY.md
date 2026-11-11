@@ -4,7 +4,11 @@ Security Policy for the **Personal Agent Kit** repository.
 
 ## 🧮 Supported Versions
 
-Only the latest version on `main` is supported.
+We provide security updates for the following versions of our project:
+
+| Version | Status    | Secure |
+| ------- | --------- | ------ |
+| 1.0.1   | Supported | Yes    |
 
 ## 🛡️ Security Practices
 
@@ -23,7 +27,7 @@ If you discover a security vulnerability within this project, please follow thes
 
 1. **Do not create a public issue.** Instead, contact us directly to responsibly disclose the vulnerability.
 
-2. **Email** [contact@example.com](mailto:contact@example.com) with the following information:
+2. **Email** [r6ty5r296it6tl4eg5m.constant214@passinbox.com](mailto:r6ty5r296it6tl4eg5m.constant214@passinbox.com) with the following information:
    - A description of the vulnerability.
    - Steps to reproduce the issue.
    - Any potential impact or severity.

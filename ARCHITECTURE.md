@@ -1,8 +1,22 @@
-# Architecture Document
+# 🧱 Architecture
+
+How the **Personal Agent Kit** is built: its layers and components, how they connect, and the
+decisions behind them.
 
 > **Status**: Active | **Version**: 1.0.1 | **Date**: 2026-11-07
 
-## System Overview
+## 📚 Table of Contents
+
+- [System Overview](#-system-overview)
+- [Tech Stack](#-tech-stack)
+- [Components](#-components)
+- [How the Parts Connect](#-how-the-parts-connect)
+- [Architecture Decisions](#-architecture-decisions)
+- [Security Considerations](#-security-considerations)
+- [Testing](#-testing)
+- [License](#-license)
+
+## 🔭 System Overview
 
 PAK is a layer between the user and their coding agents. The engines run the agent loop. PAK adds
 guards, memory, protocols and personas, and connects to each engine through the mechanisms the
@@ -20,9 +34,9 @@ Optional      BMAD · voice (TTS) · monitoring · Slack bot · report generator
 Everything runs on the user's machine, under the user's account. There is no central server, and
 the kit creates no Linux user.
 
-## Tech Stack
+## 🧰 Tech Stack
 
-### Runtime
+### 🐍 Runtime
 
 - **Language**: Python 3.11+ for services and hooks, Bash for installers and guards, JavaScript
   (Bun) for OpenCode plugins.
@@ -30,13 +44,13 @@ the kit creates no Linux user.
   `:7700`. Embeddings run locally with fastembed.
 - **Engines**: Claude Code and OpenCode.
 
-### Infrastructure
+### 🏭 Infrastructure
 
 - **Services**: systemd units for `memory_service` and, when installed, `opencode-server`.
 - **CI/CD**: GitHub Actions in `.github/workflows/ci.yml`.
 - **Monitoring**: optional Prometheus, Pushgateway and Grafana stack in `local/monitoring/`.
 
-## Components
+## 🧩 Components
 
 | Component         | Path                                                                      | Role                                      |
 | ----------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
@@ -61,9 +75,9 @@ the kit creates no Linux user.
 | Languages         | `ai18n.yaml`, `helpers/ai18n/`                                            | Language of each surface                  |
 | Evals             | `evals/`                                                                  | Behavior checks against a real model      |
 
-## How the parts connect
+## 🔄 How the Parts Connect
 
-### Session start
+### 🚪 Session Start
 
 Claude Code runs `.claude/hooks/session-start.sh`, which cleans old files from `temp/` and prints
 the orientation and the normalized language policy. It also scans the instruction files of the
@@ -74,7 +88,7 @@ OpenCode gets the orientation, the policy and the memory brief through `instruct
 `build-config.sh` assembles and the session plugin refreshes at each start; the same plugin takes
 the snapshot. It has no start hook that reaches the model, so it gets no scan warning.
 
-### A command
+### 🐚 A Command
 
 1. The engine is about to run a shell command.
 2. `auto-guard` matches it against the rules: a Claude Code hook, or an OpenCode plugin that calls
@@ -87,14 +101,14 @@ the snapshot. It has no start hook that reaches the model, so it gets no scan wa
 Both engines load the guards globally: `install-hooks.py` writes them to `~/.claude/settings.json`,
 and `build-config.sh` lists the plugins in `~/.config/opencode/opencode.json`.
 
-### A write
+### 📝 A Write
 
 1. The engine asks to write a file.
 2. `pre-write-guard` blocks hardcoded secrets, credential files and broken syntax.
 3. The file is written.
 4. `post-write-judge` reviews it against `AGENTS.md` and reports findings. It never blocks.
 
-### A memory
+### 🧠 A Memory
 
 1. The agent calls `memory_add` or `memory_search` through MCP.
 2. The MCP server forwards the call to `memory_service` with the token from `.env`.
@@ -104,7 +118,7 @@ and `build-config.sh` lists the plugins in `~/.config/opencode/opencode.json`.
 
 `memory_service` is the only writer. It refuses to start without authentication.
 
-### A task
+### 🐳 A Task
 
 1. `pak task add` queues it; `pak task run` clones the repository into the task's folder.
 2. Claude Code runs in a container (`bin/worker/Dockerfile`) with `--network none`, a read-only
@@ -116,16 +130,16 @@ and `build-config.sh` lists the plugins in `~/.config/opencode/opencode.json`.
 
 `--isolation host` runs the engine on the host instead, and must be asked for.
 
-### Installation
+### 🔨 Installation
 
 `bin/install.sh` settles its options from flags and prompts, and prints the plan before changing
 anything. Then it installs the core tools, Claude Code, the submodules, `.venv` and `.env`,
 registers the hooks and starts the brain. Templates carry `<user>` placeholders, and
 `render_placeholders` fills them for the current user and clone path.
 
-## Architecture Decisions
+## 📏 Architecture Decisions
 
-### Decision 1: a layer, not a runtime
+### 📌 Decision 1: a layer, not a runtime
 
 **Context**: Harness quality decides a large part of an agent's results, and full runtimes are
 expensive to build and keep up with.
@@ -133,21 +147,21 @@ expensive to build and keep up with.
 **Consequences**: PAK cannot control what an engine does not expose. It can follow new engines
 cheaply.
 
-### Decision 2: the invoking user, any path
+### 📌 Decision 2: the invoking user, any path
 
 **Context**: Depending on a dedicated Linux user or a fixed path makes a kit hard to adopt.
 **Decision**: The kit runs as whoever installs it, from wherever it was cloned. It never creates a
 user, and templates are rendered at install time.
 **Consequences**: Tests render every installed template for an arbitrary user and path.
 
-### Decision 3: BMAD is optional
+### 📌 Decision 3: BMAD is optional
 
 **Context**: BMAD is more than half of the files, and many users will not need it.
 **Decision**: `.bmad/` ships with the repo. Its Claude Code commands and subagents live in
 `.bmad/integrations/claude/` and are copied into `.claude/` only with `--with-bmad`.
 **Consequences**: A default install has four personas and no BMAD commands. Activation is one flag.
 
-### Decision 4: no downloaded scripts in the core install
+### 📌 Decision 4: no downloaded scripts in the core install
 
 **Context**: The guards forbid piping a download into a shell, so the core installer should not do
 it either.
@@ -155,20 +169,20 @@ it either.
 still use their official installers.
 **Consequences**: The core install is limited to systems with `apt`.
 
-### Decision 5: the commit tooling lives in the repo
+### 📌 Decision 5: the commit tooling lives in the repo
 
 **Context**: The hooks only need 6 of the tools in a shared repository, and the kit must not inherit
 what that repository carries.
 **Decision**: `scripts/` holds those tools as regular files, with their tests.
 **Consequences**: Fixes to the shared tools no longer arrive on their own; they are copied by hand.
 
-### Decision 6: submodules stay pinned
+### 📌 Decision 6: submodules stay pinned
 
 **Context**: Moving to the upstream head during an install makes the result change from day to day.
 **Decision**: The installer uses the recorded commits. Updating a pin is a reviewed change.
 **Consequences**: Upstream fixes need an explicit bump.
 
-### Decision 7: the worker's network is cut by the kernel
+### 📌 Decision 7: the worker's network is cut by the kernel
 
 **Context**: A rule that reads command text cannot see what a script written to disk does, and an
 autonomous task has nobody to answer a challenge.
@@ -177,7 +191,7 @@ container lets through only listed destinations, so a task can reach its model a
 **Consequences**: Tasks need Docker and an API key or a subscription token, since the human's login
 on the host stays out. A task that needs a package index must list it in `PAK_WORKER_EGRESS`.
 
-## Security Considerations
+## 🔐 Security Considerations
 
 - Services bind to `127.0.0.1` and `memory_service` requires a token.
 - `.env` is created with mode 600 and is never committed.
@@ -203,7 +217,7 @@ on the host stays out. A task that needs a package index must list it in `PAK_WO
 - OpenCode gets no warning about injected instruction files at session start.
 - A redirect is not seen by the URL guard.
 
-## Testing
+## 🧪 Testing
 
 - `pytest -m "not integration"` runs the Python suite and enforces 96 % coverage.
 - `bun test` in `.opencode/` runs the plugin tests.
@@ -219,3 +233,12 @@ on the host stays out. A task that needs a package index must list it in `PAK_WO
   (`docs/guard-benchmark.md`); a test fails if the result drops below the recorded floor.
 - `docs/install-test.md` records the full install in a clean container.
 - `evals/` runs behavior checks against a real model, so it costs API credits.
+
+[DEVELOPMENT.md](DEVELOPMENT.md#-quality-gates) says when to run each check.
+
+---
+
+## 📜 License
+
+2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
+included in this repository.

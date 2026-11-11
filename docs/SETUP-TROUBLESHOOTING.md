@@ -275,5 +275,5 @@ sudo lsof -i :<PORT>
 
 ## See Also
 
-- [Architecture](architecture.md) — system overview
+- [Architecture](../ARCHITECTURE.md) — system overview
 - `bin/install.sh` — automated setup script

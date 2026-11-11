@@ -23,7 +23,7 @@ Quick navigation to all project documentation.
 ## 📄 Project Documents
 
 - **[PRD](prd.md)** - Product Requirements Document
-- **[Architecture](architecture.md)** - Technical Architecture Document
+- **[Architecture](../ARCHITECTURE.md)** - Technical Architecture Document
 - **[Install Test](install-test.md)** - Evidence of the install in a clean container
 
 ---

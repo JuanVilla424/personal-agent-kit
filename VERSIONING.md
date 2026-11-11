@@ -65,7 +65,10 @@ commit, carrying the marker above, starts the real mechanism:
    truth, syncing `pyproject.toml`, `README.md`, and `.bmadrc.yaml` together.
 2. It's never invoked directly by the assistant; a preview is safe to run any time and
    changes nothing: `.venv/bin/bumpversion --dry-run --list --allow-dirty [patch|minor|major]`.
-3. `CHANGELOG.md` is updated by hand — it's not auto-generated from commits.
+3. `CHANGELOG.md` is kept by hand. The `generate-changelog` hook rewrites it from scratch from
+   `Bump version: X → Y` commits, or from version tags when there are none. This repository's
+   bump message (`chore(core): bump version X → Y`) matches neither and creates no tag, so the hook
+   leaves the file as it is.
 
 ## ⭐ Best Practices
 

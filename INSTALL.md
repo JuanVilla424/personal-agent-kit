@@ -1,11 +1,21 @@
-## 🔨 Installation
+# 📦 Installation
 
 personal-agent-kit ships two installers in `bin/`. Both source `bin/_lib.sh` and are safe to re-run.
 
 They run as your own user, from wherever you cloned the repo. They create no Linux user. Use an
 account with `sudo`; running the whole installer under `sudo` is not needed.
 
-### Quick install
+## 📚 Table of Contents
+
+- [Quick Install](#-quick-install)
+- [Without Prompts](#-without-prompts)
+- [OpenCode Only](#-opencode-only)
+- [The Autonomous Worker](#-the-autonomous-worker-pak-task)
+- [Diagnostic Utilities](#-diagnostic-utilities-bin)
+- [Manual / Development Setup](#-manual--development-setup)
+- [License](#-license)
+
+## 🚀 Quick Install
 
 ```bash
 git clone --recurse-submodules https://github.com/JuanVilla424/personal-agent-kit.git
@@ -16,7 +26,7 @@ bash bin/install.sh
 The default is a core install: Claude Code, the guards and hooks, a local Qdrant and the
 `memory_service` (systemd, `:7700`). Each optional part is asked about when there is a terminal.
 
-### Without prompts
+## 🔇 Without Prompts
 
 ```bash
 bash bin/install.sh --yes                                   # core install
@@ -42,7 +52,7 @@ downloaded script: Docker and Node come from signed apt repositories.
 
 To add a part later, run the installer again with its flag.
 
-### OpenCode only
+## 🔌 OpenCode Only
 
 ```bash
 bash bin/install-opencode.sh
@@ -52,7 +62,7 @@ It installs the OpenCode CLI, builds `~/.config/opencode/opencode.json` from the
 provider API keys and installs the `opencode-server` unit (`127.0.0.1:4096`). It also sets up the
 local brain if it isn't there. It takes the same options as `install.sh`.
 
-### The autonomous worker (`pak task`)
+## 🐳 The Autonomous Worker (`pak task`)
 
 A task runs Claude Code in a container: no network but the model API, a read-only root, and nothing
 mounted but a clone of the repository, the task's own HOME and the kit's guards. It needs:
@@ -70,12 +80,12 @@ one is recorded in the task's `egress.jsonl`. Without Docker or a key, a task re
 says why. To run a task on this machine, with the guards as the only line, queue it with
 `--isolation host`. `pak doctor` shows all of this on its Worker row.
 
-### Diagnostic utilities (`bin/`)
+## 🩺 Diagnostic Utilities (`bin/`)
 
 - `bin/measure-footprint.sh` / `bin/count_tokens.py` — token footprint of the agent by layer (see `MODELS.md` §1).
 - `bin/benchmark-models.sh` — re-run the model benchmark (`MODELS.md` §2). It uses your API credits.
 
-### Manual / development setup
+## 🔧 Manual / Development Setup
 
 1. **Initialize the submodules at their pinned commits**
 
@@ -100,3 +110,13 @@ says why. To run a task on this machine, with the guards as the only line, queue
 4. **Configure environment variables**
 
    Copy the root `.env.template` to `.env` (single config file for every tool) and fill in the required values. The only exceptions with their own `.env` are `local/scripts/notify/` and `local/monitoring/`. Never commit `.env` files. `utils/tests/test_env_template_guard.py` enforces that every env var read by the code stays documented in these templates.
+
+[DEVELOPMENT.md](DEVELOPMENT.md#-local-environment) adds what the full test suite and the
+end-to-end checks need.
+
+---
+
+## 📜 License
+
+2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
+included in this repository.

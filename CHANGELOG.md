@@ -1,3 +1,15 @@
+## [1.0.6] - 2026-11-14
+
+### Bug Fixes
+
+- **core**: make the tag steps idempotent with the builtin token
+- **core**: restore the version controller from the clean template source
+
+### Chores
+
+- **core**: patch release (`patch candidate`)
+- **core**: bump version 1.0.5 → 1.0.5 retrigger [no-bump]
+
 ## [1.0.5] - 2026-11-14
 
 ### Chores

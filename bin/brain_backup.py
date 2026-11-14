@@ -303,5 +303,5 @@ def main(argv: list[str] | None = None) -> int:
     return prune(keep=args.keep)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())

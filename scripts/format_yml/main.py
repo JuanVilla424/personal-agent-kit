@@ -1,4 +1,4 @@
-# scripts/format_yml/main.py
+# scripts/validate_docker_compose.py
 import re
 import sys
 import os
@@ -17,13 +17,31 @@ def format_yml_file(file_path):
         content = f.read()
 
     lines = content.splitlines()
-    new_lines = []
 
     if not lines or not lines[0].strip().startswith("---"):
         lines.insert(0, "---")
         print(f"[FORMAT] Added '---' at the beginning of {file_path}.")
 
+    # Literal block scalars (run: |, script: |- …) hold shell, not YAML: tightening
+    # brackets or force-splitting long lines there mangles `if [[ … ]]` / `[ -n … ]`
+    # conditions and breaks the workflow's bash (broke the version-controller
+    # promotion PRs, 2026-11-14). Their content is left untouched end to end.
+    in_literal = [False] * len(lines)
+    new_lines = []
+    literal_indent = None
     for i, line in enumerate(lines):
+        indent = len(line) - len(line.lstrip(" "))
+        if literal_indent is not None:
+            if not line.strip() or indent > literal_indent:
+                in_literal[i] = True
+                continue
+            literal_indent = None  # dedent: the literal block ended; yaml again
+        if re.search(r":\s*[|][+-]?\s*(?:#.*)?$", line.rstrip()):
+            literal_indent = indent
+
+    for i, line in enumerate(lines):
+        if in_literal[i]:
+            continue
         original_line = line
         line = re.sub(r"\[\s+", "[", line)
         line = re.sub(r"\s+]", "]", line)
@@ -33,7 +51,10 @@ def format_yml_file(file_path):
             lines[i] = line
             print(f"[FORMAT] Removed extra spaces inside brackets in line {i+1} of {file_path}.")
 
-    for i, line in enumerate(lines, start=1):
+    for idx, line in enumerate(lines):
+        if in_literal[idx]:
+            new_lines.append(line)
+            continue
         current_indent = len(line) - len(line.lstrip(" "))
 
         while len(line) > 120:

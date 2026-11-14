@@ -2,6 +2,7 @@
 two_factor, and the root stream_parser (Anthropic event format)."""
 
 import sys
+import time
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -62,12 +63,11 @@ class TestThreadManager:
         await task
         await asyncio.sleep(0)  # let the done-callbacks run before judging the registry
         assert tm.active_thread_count() == 0
-        tm._last_activity["tw"] = 0.0
+        # stale on ANY machine: monotonic() is seconds-since-boot, and a fresh CI runner
+        # boots with it under _IDLE_CLEANUP_SECS — a literal 0.0 only looked stale on
+        # long-uptime boxes (the 13/11 CI red)
+        tm._last_activity["tw"] = time.monotonic() - 601
         tm.cleanup_idle()
-        for _ in range(50):  # CI runners are slow: poll instead of assuming instant cleanup
-            if "tw" not in tm._workers:
-                break
-            await asyncio.sleep(0.01)
         assert "tw" not in tm._workers
 
 

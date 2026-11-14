@@ -78,7 +78,7 @@ jobs:
         id: check_arrow
         run: |
           COMMIT_MSG="${COMMIT_MESSAGE}"
-          if [["$COMMIT_MSG" == *"→"* && "$COMMIT_MSG" == *"Bump version:"*]]; then
+          if echo "$COMMIT_MSG" | grep -q "→" && echo "$COMMIT_MSG" | grep -q "Bump version:"; then
             echo "contains_arrow=true" >> $GITHUB_OUTPUT
           else
             echo "contains_arrow=false" >> $GITHUB_OUTPUT

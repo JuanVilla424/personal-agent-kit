@@ -4,12 +4,38 @@
 ![Status](https://img.shields.io/badge/Status-Active-green.svg)
 ![Scope](https://img.shields.io/badge/Scope-IDE%20%2B%20Slack-purple.svg)
 
-Structured communication protocol for agent-to-agent delegation **within a single conversation**
-(one party-mode response, one set of BMAD personas talking to each other in-context). Enables
-one persona to request a bounded, read-only task from another without requiring the user to
-relay the message manually. **It does not cross session/process boundaries** — see "Relationship
-to cross-session messaging" below if what you actually need is to reach another, separately
-running Claude Code session.
+Structured communication protocol for agent-to-agent delegation. Two mechanisms:
+
+1. **In-process (party-mode)**: inline `[A2A → Agent]` blocks, routed by the orchestrator of the
+   same conversation — the historical part of this document.
+2. **Cross-session (real)**: `local/scripts/a2a/a2a.py` — reached as `pak a2a delegate|send|
+sessions|show|list|cancel|reap`. It hands a bounded task to a persona (`delegate`: a one-shot
+   OpenCode run that must answer with a Standard Verdict Block), or a directed message to a live
+   OpenCode session (the server API) or a live Claude Code session (a bus event drained by
+   `local/hooks/a2a_inbox.py` at the next prompt). Every request and verdict is recorded in
+   `local/scripts/a2a/logs/a2a.jsonl`; a delegation's full output lands in `logs/runs/<cid>.log`.
+
+---
+
+## How to use A2A — the real mechanisms
+
+Every command runs from the repo root as `pak a2a …` (or `python local/scripts/a2a/a2a.py …`).
+Choose by **who must receive it**:
+
+| You want to…                                              | Use                                 | Reaches                                             |
+| --------------------------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| Ask a persona for a bounded, read-only answer             | `pak a2a delegate <persona> "task"` | a one-shot OpenCode run answering as that persona   |
+| Tell the live OpenCode session something, or hand it work | `pak a2a send opencode "<message>"` | the human's running OpenCode session (server API)   |
+| Message a Claude Code session                             | `pak a2a send claude "<message>"`   | that session's next prompt, via the bus + the drain |
+
+- `--trust INTERNAL|USER` tags the origin. With USER, the orchestrator's trust policy applies by
+  persona: raven → findings advisory-only · iris → reject · elena → forced Deny.
+- `--hop N` bounds delegation chains (max 3). A delegation's `task` passes the auto-guard BEFORE
+  anything runs: a block is recorded in the registry and refused, never executed.
+- Delivery to Claude is exactly-once per session: the drain acks in the registry, and
+  `pak a2a reap --stale-h 48` closes pendings and queued messages that nobody ever drained.
+- Errors: unknown persona → check `configs/agent-cards.json` · server unreachable →
+  `pak a2a sessions` · message over 8 KiB → split it · hop ≥ 3 → the chain stops by design.
 
 ---
 

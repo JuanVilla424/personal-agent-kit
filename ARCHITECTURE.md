@@ -59,6 +59,7 @@ the kit creates no Linux user.
 | Claude Code hooks | `local/hooks/`, `.claude/hooks/`                                          | Guards, session start, voice                        |
 | OpenCode plugins  | `.opencode/plugins/`                                                      | The same guards and session events                  |
 | Brain backups     | `bin/brain_backup.py`, `bin/brain-health.sh`                              | Snapshot, restore and per-task health of the memory |
+| Self-update       | `bin/update.sh`, `bin/opencode/guard-smoke.sh`                            | Unattended update, with a guard smoke after it      |
 | OpenCode config   | `bin/opencode/`                                                           | Builds `~/.config/opencode/opencode.json`           |
 | Memory service    | `local/scripts/memory_index/`                                             | Single writer and search endpoint                   |
 | Memory MCP        | `bin/opencode/mcp_memory_server.py`                                       | Memory tools for both engines                       |

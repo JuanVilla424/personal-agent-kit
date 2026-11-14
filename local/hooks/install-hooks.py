@@ -40,6 +40,8 @@ MANAGED = [
     ("PostToolUse", "ExitPlanMode", str(HOOKS_DIR / "post-plan-approval.sh"), 5000),
     ("PreCompact", "manual|auto", str(HOOKS_DIR / "pre-compact-reminder.sh"), 5000),
     ("UserPromptSubmit", "", str(HOOKS_DIR / "token-check-reminder.sh"), 5000),
+    ("SessionStart", "", str(HOOKS_DIR / "a2a_inbox.py"), 5000),
+    ("UserPromptSubmit", "", str(HOOKS_DIR / "a2a_inbox.py"), 5000),
     ("SessionStart", "", str(REPO_ROOT / ".claude" / "hooks" / "session-start.sh"), 10000),
     ("Stop", "", str(REPO_ROOT / ".claude" / "hooks" / "tts_hook.py"), 5000),
     ("Notification", "", str(REPO_ROOT / ".claude" / "hooks" / "tts_hook.py"), 5000),

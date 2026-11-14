@@ -5,6 +5,7 @@ pak doctor                    every layer and its real state; exit 1 if a requir
 pak guard "<command>"         judge a command (bin/auto_guard.py; also approve, --status…)
 pak memory search|add|brief|consolidate …   (local/scripts/memory_index/memory.py)
 pak lessons add|list|expired …              (bin/lessons.py)
+pak a2a delegate|send|sessions|show|list|cancel …   (local/scripts/a2a/a2a.py)
 pak brain backup|list|restore|prune …       (bin/brain_backup.py)
 pak brain-health               the brain's per-task health check (bin/brain-health.sh)
 pak task add|run|status|image …             (bin/pak_worker.py)
@@ -33,6 +34,7 @@ PASSTHROUGH = {
     "task": REPO_ROOT / "bin" / "pak_worker.py",
     "quarantine": REPO_ROOT / "bin" / "quarantine.py",
     "snapshot": REPO_ROOT / "bin" / "snapshot.py",
+    "a2a": REPO_ROOT / "local" / "scripts" / "a2a" / "a2a.py",
 }
 # Snapshots are never pruned for the human: past this size doctor says so.
 SNAPSHOT_WARN_BYTES = 5 * 1024**3

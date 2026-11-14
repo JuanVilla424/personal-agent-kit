@@ -75,8 +75,11 @@ backup` snapshots every Qdrant collection with generation marks under `~/.pak/ba
 - **Protocols Library:** versioned agent protocols (commit rules, dependency management, token
   management, A2A inter-agent communication) available in three densities: full, ultra
   (agent-load), and compact (fallback).
-- **A2A Inter-Agent Protocol:** structured agent-to-agent delegation in IDE party-mode — any two
-  personas can delegate bounded tasks with trust tagging and loop guard.
+- **A2A Inter-Agent Protocol:** structured agent-to-agent delegation — inline in IDE party-mode
+  (`[A2A → Agent]` blocks) and across sessions through `pak a2a`: `delegate` hands a bounded task
+  to a persona (a one-shot OpenCode run answering a Standard Verdict Block), `send` reaches a
+  live OpenCode or Claude session, with trust tagging, a hop loop guard, the auto-guard on every
+  task, and an append-only registry.
 - **OpenCode CLI Integration:** `bin/install-opencode.sh` sets up OpenCode (a custom
   OpenAI-compatible provider of your choice + Z.AI GLM as a second example, LSP servers, bash
   timeout); `bin/opencode/build-config.sh` builds the full `~/.config/opencode/opencode.json`

@@ -3,7 +3,7 @@
 ![CI/CD](https://img.shields.io/badge/CI/CD-Pipeline-blue)
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)
 ![Build Status](https://github.com/JuanVilla424/personal-agent-kit/actions/workflows/ci.yml/badge.svg?branch=dev)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)

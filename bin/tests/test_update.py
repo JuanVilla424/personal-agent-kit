@@ -22,12 +22,38 @@ def test_both_scripts_parse():
 
 def test_update_runs_in_a_fresh_local_clone(tmp_path):
     """A clone of this repo, updated in place: pull skips, hooks install, TASKS.md lands."""
-    clone = tmp_path / "clone"
-    subprocess.run(
-        ["git", "clone", "--branch", "dev", "--single-branch", str(REPO), str(clone)],
+    # CI checks out shallow (depth=1) and a clone FROM a shallow source dies with 128:
+    # unshallow the workspace first (a no-op on a full clone like a dev box).
+    shallow = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--is-shallow-repository"],
         capture_output=True,
-        check=True,
+        text=True,
+        check=False,
     )
+    if shallow.stdout.strip() == "true":
+        subprocess.run(
+            ["git", "-C", str(REPO), "fetch", "--unshallow", "origin"],
+            capture_output=True,
+            timeout=600,
+            check=True,
+        )
+    clone = tmp_path / "clone"
+    # The CI workspace checks the PR's merge ref out DETACHED (no refs/heads/dev): name the
+    # current HEAD `dev` so the clone finds a branch to check out. On a dev box this is a
+    # no-op — HEAD already IS dev.
+    subprocess.run(
+        ["git", "-C", str(REPO), "branch", "-f", "dev", "HEAD"], capture_output=True, check=False
+    )
+    clone_url = f"file://{REPO}"
+    proc = subprocess.run(
+        ["git", "clone", "--branch", "dev", "--single-branch", clone_url, str(clone)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise AssertionError(f"git clone failed (rc={proc.returncode}): {proc.stderr[-400:]}")
     # Hermetic: the submodule would reach for GitHub; without .gitmodules the step just reports.
     (clone / ".gitmodules").unlink(missing_ok=True)
     # The script under test is not committed yet — handing it to the clone DIRTYIES the tree,

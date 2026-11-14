@@ -2,7 +2,7 @@
 # Validated against the agent-memory-service image build (Python 3.12, 2026-06-25).
 # Direct deps: qdrant-client · fastembed · python-dotenv · fastapi · uvicorn · requests
 # Regenerate ONLY after an intentional bump:  pip freeze  (inside the rebuilt image).
-annotated-doc==0.0.4
+annotated-doc==0.0.6
 annotated-types==0.7.0
 anyio==4.16.0
 certifi==2026.10.23
@@ -24,7 +24,7 @@ huggingface_hub==1.21.0
 hyperframe==6.1.0
 idna==3.18
 loguru==0.7.3
-markdown-it-py==4.2.0
+markdown-it-py==4.3.0
 mdurl==0.1.2
 mmh3==5.2.1
 numpy==2.5.0
@@ -32,7 +32,7 @@ onnxruntime==1.27.0
 packaging==26.3
 pillow==13.0.0
 portalocker==3.2.0
-protobuf==7.35.1
+protobuf==7.36.2
 py_rust_stemmers==0.1.8
 pydantic==2.13.4
 pydantic_core==2.46.4

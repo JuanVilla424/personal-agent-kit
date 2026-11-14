@@ -27,7 +27,7 @@ loguru==0.7.3
 markdown-it-py==4.3.0
 mdurl==0.1.2
 mmh3==5.2.1
-numpy==2.5.0
+numpy==2.5.4
 onnxruntime==1.27.0
 packaging==26.3
 pillow==13.0.0

@@ -52,28 +52,29 @@ the kit creates no Linux user.
 
 ## 🧩 Components
 
-| Component         | Path                                                                      | Role                                      |
-| ----------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
-| Installers        | `bin/install.sh`, `bin/_lib.sh`                                           | Set up the kit for the current user       |
-| Commit tooling    | `scripts/`                                                                | Tools behind the pre-commit hooks         |
-| Claude Code hooks | `local/hooks/`, `.claude/hooks/`                                          | Guards, session start, voice              |
-| OpenCode plugins  | `.opencode/plugins/`                                                      | The same guards and session events        |
-| OpenCode config   | `bin/opencode/`                                                           | Builds `~/.config/opencode/opencode.json` |
-| Memory service    | `local/scripts/memory_index/`                                             | Single writer and search endpoint         |
-| Memory MCP        | `bin/opencode/mcp_memory_server.py`                                       | Memory tools for both engines             |
-| Guard             | `bin/auto_guard.py`, `bin/url_guard.py`                                   | One rule set for both engines             |
-| Shell parser      | `bin/shell_parse.py`                                                      | Reads a command as bash would run it      |
-| Snapshots         | `bin/snapshot.py`                                                         | Copies of a work tree, kept outside it    |
-| Worker            | `bin/pak_worker.py`, `bin/worker/Dockerfile`, `bin/egress.py`             | Tasks in a container, reviewed patches    |
-| Decision MCP      | `bin/decision_mcp.py`, `bin/decision.py`                                  | `guard_mutation`, optional engine         |
-| Quarantine        | `bin/quarantine.py`                                                       | The only way to remove a file             |
-| Injection scan    | `local/scripts/notify/security/injection_guard.py`, `bin/scan_context.py` | Memories and instruction files            |
-| Protocols         | `protocols/`                                                              | Rules in three densities                  |
-| Personas          | `.bmad/local/`                                                            | Kai, Raven, Iris and Elena                |
-| BMAD              | `.bmad/`                                                                  | Optional team and agent builder           |
-| Model map         | `configs/model-protocol-map.yaml`                                         | Model IDs by role, protocol variant       |
-| Languages         | `ai18n.yaml`, `helpers/ai18n/`                                            | Language of each surface                  |
-| Evals             | `evals/`                                                                  | Behavior checks against a real model      |
+| Component         | Path                                                                      | Role                                                |
+| ----------------- | ------------------------------------------------------------------------- | --------------------------------------------------- |
+| Installers        | `bin/install.sh`, `bin/_lib.sh`                                           | Set up the kit for the current user                 |
+| Commit tooling    | `scripts/`                                                                | Tools behind the pre-commit hooks                   |
+| Claude Code hooks | `local/hooks/`, `.claude/hooks/`                                          | Guards, session start, voice                        |
+| OpenCode plugins  | `.opencode/plugins/`                                                      | The same guards and session events                  |
+| Brain backups     | `bin/brain_backup.py`, `bin/brain-health.sh`                              | Snapshot, restore and per-task health of the memory |
+| OpenCode config   | `bin/opencode/`                                                           | Builds `~/.config/opencode/opencode.json`           |
+| Memory service    | `local/scripts/memory_index/`                                             | Single writer and search endpoint                   |
+| Memory MCP        | `bin/opencode/mcp_memory_server.py`                                       | Memory tools for both engines                       |
+| Guard             | `bin/auto_guard.py`, `bin/url_guard.py`                                   | One rule set for both engines                       |
+| Shell parser      | `bin/shell_parse.py`                                                      | Reads a command as bash would run it                |
+| Snapshots         | `bin/snapshot.py`                                                         | Copies of a work tree, kept outside it              |
+| Worker            | `bin/pak_worker.py`, `bin/worker/Dockerfile`, `bin/egress.py`             | Tasks in a container, reviewed patches              |
+| Decision MCP      | `bin/decision_mcp.py`, `bin/decision.py`                                  | `guard_mutation`, optional engine                   |
+| Quarantine        | `bin/quarantine.py`                                                       | The only way to remove a file                       |
+| Injection scan    | `local/scripts/notify/security/injection_guard.py`, `bin/scan_context.py` | Memories and instruction files                      |
+| Protocols         | `protocols/`                                                              | Rules in three densities                            |
+| Personas          | `.bmad/local/`                                                            | Kai, Raven, Iris and Elena                          |
+| BMAD              | `.bmad/`                                                                  | Optional team and agent builder                     |
+| Model map         | `configs/model-protocol-map.yaml`                                         | Model IDs by role, protocol variant                 |
+| Languages         | `ai18n.yaml`, `helpers/ai18n/`                                            | Language of each surface                            |
+| Evals             | `evals/`                                                                  | Behavior checks against a real model                |
 
 ## 🔄 How the Parts Connect
 

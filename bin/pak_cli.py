@@ -5,6 +5,8 @@ pak doctor                    every layer and its real state; exit 1 if a requir
 pak guard "<command>"         judge a command (bin/auto_guard.py; also approve, --status…)
 pak memory search|add|brief|consolidate …   (local/scripts/memory_index/memory.py)
 pak lessons add|list|expired …              (bin/lessons.py)
+pak brain backup|list|restore|prune …       (bin/brain_backup.py)
+pak brain-health               the brain's per-task health check (bin/brain-health.sh)
 pak task add|run|status|image …             (bin/pak_worker.py)
 pak quarantine mv|show …                    (bin/quarantine.py)
 pak snapshot take|list|show|diff|restore …  (bin/snapshot.py)
@@ -127,6 +129,17 @@ def check_consolidation() -> tuple[str, str]:
     )
 
 
+def check_brain_backup() -> tuple[str, str]:
+    import brain_backup
+
+    age = brain_backup.latest_age_hours()
+    if age is None:
+        return "off", f"none yet in {brain_backup.root()}: pak brain backup"
+    if age > 24 * 7:
+        return "warn", f"the newest generation is {age / 24:.0f} days old: pak brain backup"
+    return "ok", f"the newest generation is {age:.0f}h old"
+
+
 def check_lessons() -> tuple[str, str]:
     import lessons
 
@@ -193,6 +206,7 @@ CHECKS = [
     ("OpenCode", lambda: check_opencode(Path.home())),
     ("Memory", check_memory),
     ("Consolidation", check_consolidation),
+    ("Brain backup", check_brain_backup),
     ("Lessons", check_lessons),
     ("Slack", check_slack),
 ]
@@ -270,6 +284,13 @@ def main(argv: list[str] | None = None) -> int:
         return doctor()
     if command in PASSTHROUGH:
         return subprocess.run([python(), str(PASSTHROUGH[command]), *rest], check=False).returncode
+    if command == "brain" and rest[:1] == ["health"]:
+        script = REPO_ROOT / "bin" / "brain-health.sh"
+        return subprocess.run(["bash", str(script), *rest[1:]], check=False).returncode
+    if command == "brain":
+        import brain_backup
+
+        return brain_backup.main(rest)
     if command == "eval" and rest[:1] == ["guard"]:
         test = REPO_ROOT / "bin" / "tests" / "test_guard_corpus.py"
         corpus = subprocess.run(

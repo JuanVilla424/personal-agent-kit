@@ -65,6 +65,43 @@ def test_doctor_fails_when_a_required_layer_fails(monkeypatch, capsys):
     assert cli.doctor() == 0
 
 
+def test_brain_backup_check_follows_the_generation_age(monkeypatch, tmp_path):
+    import os
+    import time
+
+    monkeypatch.setenv("PAK_BACKUP_ROOT", str(tmp_path / "backups"))
+    monkeypatch.setenv("MEMORY_BACKUP_COLLECTIONS", "c1")
+    assert cli.check_brain_backup()[0] == "off"
+    brain = tmp_path / "backups"
+    (brain / "c1").mkdir(parents=True)
+    snapshot = brain / "c1" / "1700000000-abcd1234ef56.snapshot"
+    snapshot.write_bytes(b"snap")
+    (brain / "latest.c1.generation").write_text(snapshot.name + "\n")
+    assert cli.check_brain_backup()[0] == "ok"
+    old = time.time() - 8 * 86400
+    os.utime(snapshot, (old, old))
+    state, detail = cli.check_brain_backup()
+    assert state == "warn" and "8 days old" in detail
+
+
+def test_brain_dispatches_to_backup_and_health(monkeypatch):
+    import brain_backup
+
+    called = []
+    monkeypatch.setattr(brain_backup, "main", lambda rest: called.append(rest) or 0)
+    assert cli.main(["brain", "backup", "--keep", "3"]) == 0
+    assert called == [["backup", "--keep", "3"]]
+    ran = {}
+
+    def fake_run(cmd, **_kwargs):
+        ran["cmd"] = cmd
+        return type("R", (), {"returncode": 7})()
+
+    monkeypatch.setattr(cli.subprocess, "run", fake_run)
+    rc = cli.main(["brain", "health"])
+    assert rc == 7 and "brain-health.sh" in ran["cmd"][1]
+
+
 def test_the_lessons_and_guard_checks_run(monkeypatch, tmp_path):
     monkeypatch.setenv("PAK_LESSONS", str(tmp_path / "lessons.jsonl"))
     assert cli.check_lessons()[0] == "ok"

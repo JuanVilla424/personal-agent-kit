@@ -56,6 +56,10 @@ It runs as your own user, from wherever you clone it. It creates no Linux user.
 - **Snapshots Behind the Guard:** every session and every challenge first copies the repository to
   `~/.pak/snapshots`, outside it and without touching its `.git`. `pak snapshot restore` brings
   back what a script deleted, and deletes nothing.
+- **Backups of the Brain:** the memory is the only state that exists nowhere else — `pak brain
+backup` snapshots every Qdrant collection with generation marks under `~/.pak/backups`, keeps
+  the last N, and `pak brain restore --yes` brings a collection back with a full replace.
+  `pak brain-health` reports each layer's real state in one run.
 - **An Isolated Worker:** `pak task` hands a task to Claude Code in a container with no network but
   the model API, a read-only root and nothing of yours mounted but a clone. It returns a reviewed
   patch and never commits. Every connection it asks for is recorded.
@@ -161,6 +165,9 @@ in `SLACK_CHANNEL_IDS`, and nobody while either is empty.
 1. **Check every layer:** `pak doctor`.
    - `pak guard "<command>"` judges a command, and `pak memory search "<question>"` searches the
      memory.
+   - `pak brain backup` snapshots the memory — the only state that exists nowhere else — and
+     `pak brain restore --yes` brings a collection back; `pak brain-health` checks every layer
+     in one run.
    - `pak task add "<task>" --repo <path>` followed by `pak task run` hands a task to the
      autonomous worker, which runs it in a container and returns a reviewed patch, never a commit.
    - `pak snapshot list` and `pak snapshot restore <id>` bring back a copy of the repository from

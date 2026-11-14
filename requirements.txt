@@ -1,4 +1,4 @@
 python-dotenv>=1.0.0
-edge-tts>=6.1.0
+edge-tts>=7.3.1
 requests>=2.34.2
-mcp[cli]>=2.0.0
+mcp[cli]>=2.3.0

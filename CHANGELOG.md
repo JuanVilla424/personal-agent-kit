@@ -1,3 +1,13 @@
+## [1.0.4] - 2026-11-14
+
+### Bug Fixes
+
+- **core**: make the bump check grep based to survive the yaml formatter
+
+### Chores
+
+- **core**: bump version 1.0.2 → 1.0.3 (`patch candidate`)
+
 ## [1.0.3] - 2026-11-14
 
 ### Features

@@ -1,0 +1,43 @@
+---
+version: 2
+
+updates:
+  # Root venv: the kit's runtime and dev dependencies.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # The memory service image: a fully pinned production lock — bump one pin per PR,
+  # never grouped, so every security bump is reviewable on its own.
+  - package-ecosystem: pip
+    directory: "/local/scripts/memory_index"
+    schedule:
+      interval: weekly
+
+  # The Slack bot's own venv.
+  - package-ecosystem: pip
+    directory: "/local/scripts/notify"
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep the CI actions current.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"

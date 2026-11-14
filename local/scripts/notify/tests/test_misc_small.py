@@ -60,9 +60,14 @@ class TestThreadManager:
         task = asyncio.ensure_future(noop())
         tm.register_worker("tw", task)
         await task
+        await asyncio.sleep(0)  # let the done-callbacks run before judging the registry
         assert tm.active_thread_count() == 0
         tm._last_activity["tw"] = 0.0
         tm.cleanup_idle()
+        for _ in range(50):  # CI runners are slow: poll instead of assuming instant cleanup
+            if "tw" not in tm._workers:
+                break
+            await asyncio.sleep(0.01)
         assert "tw" not in tm._workers
 
 

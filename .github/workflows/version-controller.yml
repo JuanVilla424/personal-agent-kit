@@ -52,11 +52,11 @@ jobs:
         id: determine_branch
         run: |
           CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
-          if ["$CURRENT_BRANCH" = "dev"]; then
+          if [ "$CURRENT_BRANCH" = "dev" ]; then
             NEXT_BRANCH="test"
-          elif ["$CURRENT_BRANCH" = "test"]; then
+          elif [ "$CURRENT_BRANCH" = "test" ]; then
             NEXT_BRANCH="prod"
-          elif ["$CURRENT_BRANCH" = "prod"]; then
+          elif [ "$CURRENT_BRANCH" = "prod" ]; then
             NEXT_BRANCH="main"
           else
             NEXT_BRANCH=""
@@ -188,7 +188,7 @@ jobs:
               DESC=$(echo "$DESC" | sed -E 's/\s*\[(minor|major|patch) candidate\]\s*$//')
               SCOPE=$(echo "$clean" | sed -nE 's/^[a-z]+\(([^)]+)\):.*/\1/p')
 
-              if [-n "$SCOPE"]; then
+              if [ -n "$SCOPE" ]; then
                 ENTRY="- **${SCOPE}**: ${DESC}"
               else
                 ENTRY="- ${DESC}"
@@ -205,7 +205,7 @@ jobs:
                 chore)    CHORES="${CHORES}${ENTRY}\n" ;;
               esac
             else
-              if [-n "$clean"]; then
+              if [ -n "$clean" ]; then
                 OTHER="${OTHER}- ${clean}\n"
               fi
             fi
@@ -213,17 +213,17 @@ jobs:
 
           BODY="## What's Changed\n\n"
 
-          [-n "$FEATURES"] && BODY="${BODY}### Features\n${FEATURES}\n"
-          [-n "$FIXES"] && BODY="${BODY}### Bug Fixes\n${FIXES}\n"
-          [-n "$DOCS"] && BODY="${BODY}### Documentation\n${DOCS}\n"
-          [-n "$REFACTORS"] && BODY="${BODY}### Refactors\n${REFACTORS}\n"
-          [-n "$PERF"] && BODY="${BODY}### Performance\n${PERF}\n"
-          [-n "$STYLES"] && BODY="${BODY}### Styles\n${STYLES}\n"
-          [-n "$TESTS"] && BODY="${BODY}### Tests\n${TESTS}\n"
-          [-n "$CHORES"] && BODY="${BODY}### Chores\n${CHORES}\n"
-          [-n "$OTHER"] && BODY="${BODY}### Other\n${OTHER}\n"
+          [ -n "$FEATURES" ] && BODY="${BODY}### Features\n${FEATURES}\n"
+          [ -n "$FIXES" ] && BODY="${BODY}### Bug Fixes\n${FIXES}\n"
+          [ -n "$DOCS" ] && BODY="${BODY}### Documentation\n${DOCS}\n"
+          [ -n "$REFACTORS" ] && BODY="${BODY}### Refactors\n${REFACTORS}\n"
+          [ -n "$PERF" ] && BODY="${BODY}### Performance\n${PERF}\n"
+          [ -n "$STYLES" ] && BODY="${BODY}### Styles\n${STYLES}\n"
+          [ -n "$TESTS" ] && BODY="${BODY}### Tests\n${TESTS}\n"
+          [ -n "$CHORES" ] && BODY="${BODY}### Chores\n${CHORES}\n"
+          [ -n "$OTHER" ] && BODY="${BODY}### Other\n${OTHER}\n"
 
-          if [-n "$PREV_TAG"]; then
+          if [ -n "$PREV_TAG" ]; then
             BODY="${BODY}**Full Changelog**: https://github.com/${REPO_FULL}/compare/${PREV_TAG}...${TAG}\n"
           fi
 

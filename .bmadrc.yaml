@@ -6,7 +6,7 @@ project_name: personal-agent-kit
 project_type: personal-agent-framework
 description: Personal Claude Code + OpenCode setup with BMAD-based agent creation
 
-version: 1.0.5
+version: 1.0.6
 
 versioning:
   protocol: semantic-versioning-v1.0.1

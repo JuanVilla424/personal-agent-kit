@@ -1,30 +1,35 @@
+## [1.0.6] - 2026-11-14
+
+### Bug Fixes
+- **core**: make the tag steps idempotent with the builtin token
+- **core**: restore the version controller from the clean template source
+
+### Chores
+- **core**: patch release (`patch candidate`)
+- **core**: bump version 1.0.5 → 1.0.5 retrigger [no-bump]
+
 ## [1.0.5] - 2026-11-14
 
 ### Chores
-
 - **core**: bump version 1.0.4 → 1.0.5 (`patch candidate`)
 
 ## [1.0.4] - 2026-11-14
 
 ### Bug Fixes
-
 - **core**: make the bump check grep based to survive the yaml formatter
 
 ### Chores
-
 - **core**: bump version 1.0.2 → 1.0.3 (`patch candidate`)
 
 ## [1.0.3] - 2026-11-14
 
 ### Features
-
 - **core**: add the native a2a engine with a claude inbox drain
 - **core**: add unattended self update with a guard smoke
 - **core**: add brain backups and per-task health
 - **core**: add personal agent kit
 
 ### Bug Fixes
-
 - **core**: name the detached head dev before the update clone
 - **core**: clone through the file transport with loud failures
 - **core**: unshallow the workspace before the update clone test
@@ -32,13 +37,11 @@
 - **core**: bump the vulnerable pins and add dependabot
 
 ### Documentation
-
 - **core**: add the pull request template
 - **core**: add the absolute pr and release rule to the enforcement protocol
 - **core**: complete the markdown docs with the house standard
 
 ### Chores
-
 - **core**: patch candidate release (`patch candidate`)
 - **core**: add the version controller promotion workflow
 - **core**: bump version 1.0.1 → 1.0.2
@@ -47,7 +50,6 @@
 - **core**: allow manual workflow dispatch
 
 ### Other Changes
-
 - build(deps-dev): update pyyaml requirement from >=6.0 to >=6.0.3 (#19)
 - build(deps-dev): update pylint requirement from >=3.3.1 to >=4.1.3 (#18)
 - build(deps-dev): update prometheus-client requirement (#17)
@@ -59,3 +61,4 @@
 - build(deps): bump markdown-it-py in /local/scripts/memory_index (#6)
 - build(deps): bump actions/checkout from 4 to 7 (#5)
 - build(deps): bump actions/setup-python from 5 to 7 (#4)
+

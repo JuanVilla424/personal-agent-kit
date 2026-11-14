@@ -44,7 +44,7 @@ uvicorn>=0.27.0            # memory_service + ops/health_endpoint
 qdrant-client>=1.7.0       # memory_index (main.py, memory_service.py)
 fastembed>=0.4.0           # memory_index embeddings (main.py, memory_service.py)
 requests>=2.31.0           # memory_index client (memory.py, seed_memory.py)
-PyYAML>=6.0                # security/permissions config
+PyYAML>=6.0.3                # security/permissions config
 
 # Tiktoken for real token counting (bin/count_tokens.py — MODELS.md footprint, replaces bytes/4)
 tiktoken>=0.7.0

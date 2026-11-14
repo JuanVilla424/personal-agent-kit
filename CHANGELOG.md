@@ -1,3 +1,9 @@
+## [1.0.5] - 2026-11-14
+
+### Chores
+
+- **core**: bump version 1.0.4 → 1.0.5 (`patch candidate`)
+
 ## [1.0.4] - 2026-11-14
 
 ### Bug Fixes

@@ -47,4 +47,4 @@ requests>=2.31.0           # memory_index client (memory.py, seed_memory.py)
 PyYAML>=6.0.3                # security/permissions config
 
 # Tiktoken for real token counting (bin/count_tokens.py — MODELS.md footprint, replaces bytes/4)
-tiktoken>=0.7.0
+tiktoken>=0.14.0

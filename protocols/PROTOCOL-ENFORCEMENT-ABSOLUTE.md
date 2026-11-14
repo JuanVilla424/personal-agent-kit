@@ -303,3 +303,21 @@ As fundamental as:
 **Version**: 1.0.1
 **Date**: 2025-11-03
 **Status**: PRODUCTION — CRITICAL — ABSOLUTE
+
+---
+
+### 9. PRs/MRs & RELEASES — ABSOLUTE
+
+**Creating or merging PRs/MRs without an explicit human order is FORBIDDEN — NEVER, under
+any interpretation.**
+
+- Promotion PRs/MRs (dev → test → prod → main) are created and merged by **the human**.
+- The agent never executes a `merge`, never queues auto-merge, never marks a PR ready.
+- **A RELEASE ONLY EVER COMES FROM MAIN**, and only on an explicit human order. Never create
+  releases unrequested; version tags are placed on main, never on working branches.
+- Dependabot/third-party PRs: the agent may REVIEW and comment on them; the human decides and
+  executes the merge unless an explicit order authorizes that particular merge.
+- Origin (2026-11-14): the agent attempted to merge the dev→test promotion and published a
+  release from dev without authorization — double violation, corrected and elevated to absolute.
+
+**Violation = HALT → REPORT → the human decides. NO EXCEPTIONS.**

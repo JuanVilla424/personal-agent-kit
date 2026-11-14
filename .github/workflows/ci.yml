@@ -7,6 +7,8 @@ on:
   push:
     branches: [dev, main]
   pull_request:
+  # A manual run, for when a push does not start the pipeline.
+  workflow_dispatch:
 
 permissions:
   contents: read

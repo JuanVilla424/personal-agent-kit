@@ -38,6 +38,12 @@ def test_update_runs_in_a_fresh_local_clone(tmp_path):
             check=True,
         )
     clone = tmp_path / "clone"
+    # The CI workspace checks the PR's merge ref out DETACHED (no refs/heads/dev): name the
+    # current HEAD `dev` so the clone finds a branch to check out. On a dev box this is a
+    # no-op — HEAD already IS dev.
+    subprocess.run(
+        ["git", "-C", str(REPO), "branch", "-f", "dev", "HEAD"], capture_output=True, check=False
+    )
     clone_url = f"file://{REPO}"
     proc = subprocess.run(
         ["git", "clone", "--branch", "dev", "--single-branch", clone_url, str(clone)],

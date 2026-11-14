@@ -159,5 +159,5 @@ def main() -> None:
     # exit 0, always: this hook communicates, it never blocks
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

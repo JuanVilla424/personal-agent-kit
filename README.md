@@ -132,7 +132,9 @@ bash bin/install.sh
 ```
 
 Use `--yes` to run without prompts, or `--dry-run` to see the plan first. [INSTALL.md](INSTALL.md)
-lists every option and the manual setup.
+lists every option and the manual setup. Once installed, `bash bin/update.sh` brings the kit to
+the repo's version unattended (ff-only pull, hooks, config rebuild, services restart only when
+code moved) — and `bash bin/opencode/guard-smoke.sh` proves the guards really block after it.
 
 ### 🗣️ Language
 

@@ -22,6 +22,21 @@ def test_both_scripts_parse():
 
 def test_update_runs_in_a_fresh_local_clone(tmp_path):
     """A clone of this repo, updated in place: pull skips, hooks install, TASKS.md lands."""
+    # CI checks out shallow (depth=1) and a clone FROM a shallow source dies with 128:
+    # unshallow the workspace first (a no-op on a full clone like a dev box).
+    shallow = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--is-shallow-repository"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if shallow.stdout.strip() == "true":
+        subprocess.run(
+            ["git", "-C", str(REPO), "fetch", "--unshallow", "origin"],
+            capture_output=True,
+            timeout=600,
+            check=True,
+        )
     clone = tmp_path / "clone"
     subprocess.run(
         ["git", "clone", "--branch", "dev", "--single-branch", str(REPO), str(clone)],

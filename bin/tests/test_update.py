@@ -38,11 +38,16 @@ def test_update_runs_in_a_fresh_local_clone(tmp_path):
             check=True,
         )
     clone = tmp_path / "clone"
-    subprocess.run(
-        ["git", "clone", "--branch", "dev", "--single-branch", str(REPO), str(clone)],
+    clone_url = f"file://{REPO}"
+    proc = subprocess.run(
+        ["git", "clone", "--branch", "dev", "--single-branch", clone_url, str(clone)],
         capture_output=True,
-        check=True,
+        text=True,
+        timeout=300,
+        check=False,
     )
+    if proc.returncode != 0:
+        raise AssertionError(f"git clone failed (rc={proc.returncode}): {proc.stderr[-400:]}")
     # Hermetic: the submodule would reach for GitHub; without .gitmodules the step just reports.
     (clone / ".gitmodules").unlink(missing_ok=True)
     # The script under test is not committed yet — handing it to the clone DIRTYIES the tree,

@@ -2,7 +2,7 @@
 pre-commit>=4.0.0
 
 # Black for code formatting
-black>=24.3.0
+black>=26.10.1
 
 # Pylint for python lint
 pylint>=4.1.3

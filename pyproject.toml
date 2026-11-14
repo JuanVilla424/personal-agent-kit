@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "personal-agent-kit"
-version = "1.0.3"
+version = "1.0.4"
 description = "Personal Claude Code + OpenCode setup with a local memory brain and BMAD-based agent creation"
 authors = ["Juan Villa <contact@example.com>"]
 readme = "README.md"

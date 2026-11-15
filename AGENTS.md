@@ -37,6 +37,7 @@ personal-agent-kit/
 │   └── scripts/             ← Automation scripts
 │       ├── notify/          ← Bidirectional Slack bot + outbound notify.py
 │       ├── memory_index/    ← Local Qdrant + memory_service
+│       ├── system_report/   ← Host report — the reference package for new tools
 │       ├── excel_report_generator/
 │       └── pdf_report_generator/
 ├── scripts/                 ← Tools behind the pre-commit hooks
@@ -181,6 +182,15 @@ ALWAYS created from a template, setup is mandatory (submodules → `.venv` → p
 promotion only via PR with `[patch candidate]`.
 
 ---
+
+## 🧰 Operating scripts — build tools for your user
+
+When the user needs an operational script, build it as a package under `local/scripts/`
+and leave it living there. The workflow, layout and conventions are documented in
+[`local/scripts/README.md`](local/scripts/README.md) — the reference package is
+[`system_report/`](local/scripts/system_report/README.md). Rules: pure stdlib when
+possible, pytest suite mandatory (the repo CI runs it), one README per package, house
+commit format, push to `dev` and let the repo CI validate again.
 
 ## 🚀 Slack bot
 

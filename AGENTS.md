@@ -34,11 +34,12 @@ personal-agent-kit/
 ├── local/
 │   ├── hooks/               ← Claude Code hooks and guards
 │   ├── monitoring/          ← Optional Prometheus + Grafana stack
-│   └── scripts/             ← Automation scripts
+│   ├── scripts/             ← Published automation tools (versioned)
 │       ├── notify/          ← Bidirectional Slack bot + outbound notify.py
 │       ├── memory_index/    ← Local Qdrant + memory_service
 │       ├── system_report/   ← Host report — the reference package for new tools
 │       ├── excel_report_generator/
+│   └── developments/        ← Tools the agent builds for THIS user — git-excluded, never published
 │       └── pdf_report_generator/
 ├── scripts/                 ← Tools behind the pre-commit hooks
 ├── helpers/ai18n/           ← JuanVilla424/ai18n submodule (language policy resolver)

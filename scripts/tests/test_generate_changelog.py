@@ -30,6 +30,17 @@ from generate_changelog.main import (
 TODAY_UTC = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+class _FixedDatetime(datetime):
+    """datetime subclass with a frozen now() — midnight-rollover-proof tests."""
+
+    @classmethod
+    def now(cls, tz=None):  # noqa: ANN001, ANN201
+        return datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+
+
+FIXED_NOW = _FixedDatetime.now()
+
+
 def test_parse_arguments_defaults(monkeypatch):
     """parse_arguments defaults to INFO log level."""
     monkeypatch.setattr(sys, "argv", ["generate_changelog"])
@@ -123,10 +134,13 @@ def test_generate_changelog_entry_with_date():
     assert "### Other Changes\n- mystery commit\n" in entry
 
 
-def test_generate_changelog_entry_defaults_to_today():
-    """Without an explicit date the entry is stamped with today (UTC)."""
+def test_generate_changelog_entry_defaults_to_today(mocker):
+    """Without an explicit date the entry is stamped with today (UTC) — pinned so the
+    test survives a UTC-midnight rollover between import and run."""
+    fixed_now = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch("generate_changelog.main.datetime", _FixedDatetime)
     entry = generate_changelog_entry("1.0.0", {}, [])
-    assert entry.startswith(f"## [1.0.0] - {TODAY_UTC}")
+    assert entry.startswith("## [1.0.0] - 2026-06-15")
 
 
 def test_generate_full_changelog_orders_latest_first_and_skips_empty():
@@ -168,12 +182,14 @@ def test_get_tag_date(mocker):
 
 
 def test_get_tag_date_failure_falls_back_to_today(mocker):
-    """A git failure falls back to today's date."""
+    """A git failure falls back to today's date — pinned to survive a UTC rollover."""
+    fixed_now = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch("generate_changelog.main.datetime", _FixedDatetime)
     mocker.patch(
         "generate_changelog.main.subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "git"),
     )
-    assert get_tag_date("v1.0.0") == TODAY_UTC
+    assert get_tag_date("v1.0.0") == FIXED_NOW.strftime("%Y-%m-%d")
 
 
 def test_get_sorted_tags_filters_and_sorts_semantically(mocker):
@@ -277,10 +293,12 @@ def test_get_all_commits_chains_tag_ranges(mocker):
 
 def test_get_tag_dates_includes_unreleased(mocker):
     """Tag dates are mapped without the 'v' prefix plus an Unreleased entry."""
+    fixed_now = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch("generate_changelog.main.datetime", _FixedDatetime)
     mocker.patch("generate_changelog.main.get_tag_date", return_value="2026-01-01")
     dates = get_tag_dates(["v1.0.0"])
     assert dates["1.0.0"] == "2026-01-01"
-    assert dates["Unreleased"] == TODAY_UTC
+    assert dates["Unreleased"] == FIXED_NOW.strftime("%Y-%m-%d")
 
 
 def test_update_changelog_creates_missing_file(tmp_path, monkeypatch):

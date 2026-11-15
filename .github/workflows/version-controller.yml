@@ -151,7 +151,7 @@ jobs:
           git push origin "$TAG_NAME"
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
         env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate Release Notes
         id: release_notes
         if: github.ref == 'refs/heads/main' && steps.check_arrow.outputs.contains_arrow == 'true'

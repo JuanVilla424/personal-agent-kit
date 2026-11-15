@@ -1,3 +1,24 @@
+## [1.0.7] - 2026-11-14
+
+### Chores
+
+- **core**: patch release (`patch candidate`)
+- **core**: bump mcp edge-tts and uvicorn requirements
+- **core**: bump ruff requirement in notify
+
+### Other Changes
+
+- build(deps): bump charset-normalizer from 3.4.7 to 3.5.2 in /local/scripts/memory_index (#3)
+- build(deps): update mypy requirement from <2,>=1.10 to >=2.4.1,<3 in /local/scripts/notify (#4)
+- build(deps-dev): update tiktoken requirement from >=0.7.0 to >=0.14.0 (#14)
+- build(deps-dev): update black requirement from >=24.3.0 to >=26.10.1 (#13)
+- build(deps): bump idna from 3.18 to 3.20 in /local/scripts/memory_index (#5)
+- build(deps): bump grpcio from 1.81.1 to 1.85.1 in /local/scripts/memory_index (#1)
+- build(deps): bump numpy from 2.5.0 to 2.5.4 in /local/scripts/memory_index (#7)
+- build(deps): update fastapi requirement from <1,>=0.111 to >=0.162.4,<1 in /local/scripts/notify (#6)
+- build(deps): bump starlette from 1.3.1 to 1.10.0 in /local/scripts/memory_index (#2)
+- build(deps): update requests requirement from >=2.31.0 to >=2.34.2 (#12)
+
 ## [1.0.6] - 2026-11-14
 
 ### Bug Fixes

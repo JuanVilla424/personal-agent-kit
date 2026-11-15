@@ -6,7 +6,7 @@
 ![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
 ![Build Status](https://github.com/JuanVilla424/personal-agent-kit/actions/workflows/ci.yml/badge.svg?branch=dev)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)
-![License](https://img.shields.io/badge/license-Proprietary-red.svg)
+![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)
 
 **Personal Agent Kit** (PAK) is a brain and governance layer for Claude Code and OpenCode: a local
 memory, guards that run before an action, versioned protocols and a team of personas. It has no
@@ -252,5 +252,4 @@ For any inquiries or support, please open an issue or contact [r6ty5r296it6tl4eg
 
 ## 📜 License
 
-2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE)
-file included in this repository.
+Released under the [Apache License 2.0](LICENSE). Use it, modify it, ship it — attribution appreciated.

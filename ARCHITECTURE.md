@@ -242,5 +242,4 @@ on the host stays out. A task that needs a package index must list it in `PAK_WO
 
 ## 📜 License
 
-2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
-included in this repository.
+Released under the [Apache License 2.0](LICENSE). Use it, modify it, ship it — attribution appreciated.

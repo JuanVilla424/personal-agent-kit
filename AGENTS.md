@@ -192,6 +192,17 @@ and leave it living there. The workflow, layout and conventions are documented i
 possible, pytest suite mandatory (the repo CI runs it), one README per package, house
 commit format, push to `dev` and let the repo CI validate again.
 
+## 🧪 Personal developments — tools for THIS user
+
+Tools the agent builds for the person using the kit go under `local/developments/` —
+a git-excluded folder that lives only on the box and is **never published**. Same
+package layout as the published tools (`README.md`, `main.py`, `tests/`). If a tool
+grows into something every kit user should have, it graduates to `local/scripts/`
+through a normal commit.
+
+The published tools under `local/scripts/` and their conventions are documented in
+[`local/scripts/README.md`](local/scripts/README.md).
+
 ## 🚀 Slack bot
 
 > The bot is closed by default: it answers only the users in `SLACK_ALLOWED_USERS`, in the

@@ -474,6 +474,15 @@ def forget(req: ForgetReq, x_memory_token: str = Header("")):
     return {"forgotten": req.id}
 
 
+@app.get("/memory/whoami")
+def whoami(x_memory_token: str = Header("")):
+    """Who this token is here; 401 when the service does not know it. /memory/health answers
+    anyone, so on a machine with two kits it cannot tell a kit that the service on its address
+    is its own: accepting the kit's token does. Touches no memory."""
+    verified_user, is_admin = _resolve(x_memory_token)
+    return {"user": verified_user, "admin": is_admin}
+
+
 @app.get("/memory/health")
 def health():
     try:

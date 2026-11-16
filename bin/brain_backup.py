@@ -112,6 +112,12 @@ def _create_snapshot(coll: str) -> str | None:
         return None
 
 
+def _exists(coll: str) -> bool:
+    """False only when Qdrant answers that the collection is not there."""
+    status, _ = _request("GET", f"{base_url()}/collections/{coll}")
+    return status != 404
+
+
 def _download_snapshot(coll: str, name: str, dest: Path) -> bool:
     status, body = _request("GET", f"{base_url()}/collections/{coll}/snapshots/{name}", timeout=120)
     if status != 200 or not body:
@@ -178,6 +184,10 @@ def take(keep: int = DEFAULT_KEEP) -> int:
         for coll in collections():
             name = _create_snapshot(coll)
             if not name:
+                if not _exists(coll):
+                    # the docs collection of a kit that never indexed them: no data, no failure
+                    print(f"– {coll}: not created yet, nothing to back up")
+                    continue
                 print(f"✘ {coll}: snapshot creation failed", file=sys.stderr)
                 failed = True
                 continue

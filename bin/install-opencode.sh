@@ -48,16 +48,20 @@ setup_memory_service_local
 # missing: the local brain (Qdrant/memory_service), same as install.sh does.
 sep; echo -e "${CYAN}[4/5] Verification${NC}"
 v_local=1 v_svc=1
+brain_ports
 if [ "${LOCAL_BRAIN:-0}" = "1" ]; then
-    curl -s -m3 http://localhost:7633/collections >/dev/null 2>&1 && ok "Local Qdrant responds (:7633)" || { warn "Local Qdrant not responding"; v_local=0; }
+    curl -s -m3 "http://localhost:$QDRANT_PORT/collections" >/dev/null 2>&1 && ok "Local Qdrant responds (:$QDRANT_PORT)" || { warn "Local Qdrant not responding (:$QDRANT_PORT)"; v_local=0; }
 else
     info "Local brain skipped — skipping its verification"; v_local=skip
 fi
 if [ "${LOCAL_MEMSVC:-0}" = "1" ]; then
     if [ "$v_local" = "1" ] && wait_memory_service; then
-        ok "Local memory_service responds (:7700)"
+        ok "Local memory_service responds (:$MEMSVC_PORT)"
+        info "Embedding model: a first install downloads it (a few hundred MB)..."
+        warm_memory_model && ok "Embedding model ready" \
+            || warn "Embedding model not fetched yet — the first save or search will wait for it"
     else
-        warn "Local memory_service not responding (:7700)"
+        warn "Local memory_service not responding (:$MEMSVC_PORT)"
         v_svc=0
     fi
 else
@@ -70,7 +74,7 @@ mark() { [ "$1" = "1" ] && echo -e "  ${GREEN}✔${NC}  $2" || { [ "$1" = "skip"
 mark "$v_node"    "Node.js:        $(command -v node &>/dev/null && node --version || echo missing)"
 mark "$v_oc"      "OpenCode:       $(command -v opencode &>/dev/null && opencode --version 2>/dev/null | head -1 || echo missing)"
 mark "$v_local"   "Local brain:    Qdrant (personal memory)"
-mark "$v_svc"     "Local service:  memory_service via systemd (:7700 — personal + search)"
+mark "$v_svc"     "Local service:  memory_service via systemd (:$MEMSVC_PORT — personal + search)"
 mark "$v_build"   "Config built:   build-config.sh (.bmad/* + agents/*.prompt → opencode.json)"
 mark "$v_cfg"     "Config valid:   providers custom/zai + agents + lsp"
 mark "$v_brief"   "Memory brief:   injected into instructions"

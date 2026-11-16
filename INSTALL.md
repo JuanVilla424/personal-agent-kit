@@ -9,6 +9,7 @@ account with `sudo`; running the whole installer under `sudo` is not needed.
 
 - [Quick Install](#-quick-install)
 - [Without Prompts](#-without-prompts)
+- [Own Ports for the Brain](#-own-ports-for-the-brain)
 - [OpenCode Only](#-opencode-only)
 - [The Autonomous Worker](#-the-autonomous-worker-pak-task)
 - [Diagnostic Utilities](#-diagnostic-utilities-bin)
@@ -51,6 +52,25 @@ bash bin/install.sh --dry-run --with-opencode               # print the plan, ch
 downloaded script: Docker and Node come from signed apt repositories.
 
 To add a part later, run the installer again with its flag.
+
+## 🔢 Own Ports for the Brain
+
+The brain uses two ports of this machine: Qdrant on `7633` (and `7634` for gRPC) and the
+`memory_service` on `7700`. When something else already holds them, another kit for example, the
+installer does not adopt that Qdrant: it skips the brain and says whose it is. Give this checkout
+its own ports in `.env` and run the installer again:
+
+| Setting               | Example                 |
+| --------------------- | ----------------------- |
+| `QDRANT_PORT`         | `7733`                  |
+| `MEMORY_SERVICE_PORT` | `7800`                  |
+| `MEMORY_SERVICE_URL`  | `http://localhost:7800` |
+
+The three move together. On a port of its own the Qdrant container is `memory-qdrant-<port>`,
+with its own volume and `<port>+1` for gRPC, so nothing is shared with the other kit. The
+installer, `pak doctor` and `bash bin/brain-health.sh` count the service as this kit's only when
+it accepts this kit's token, never because something answers on the address. The optional
+monitoring stack in `local/monitoring/` scrapes the default Qdrant only.
 
 ## 🔌 OpenCode Only
 

@@ -67,34 +67,50 @@ for coll in ${COLLS}; do
         ok "${coll} holds ${pts} points"
     elif [ "${pts}" = "0" ] && [ "${coll}" = "${c_docs}" ]; then
         warn "${coll} is empty (0 points) — index the docs"
+    elif [ "${pts}" = "0" ]; then
+        warn "${coll} is empty (0 points) — nothing saved there yet"
     else
         warn "${coll} missing or unreadable (points=${pts:-?})"
     fi
 done
 
-# 3. memory_service answers and reports its layers
+# 3. memory_service answers, accepts this kit's token, and reports its layers. /memory/health
+#    answers anyone: on a machine with two kits the service on this address may be the other
+#    one's, and its memories are not this kit's. The token is the proof, and it reaches curl on
+#    stdin like the Qdrant key.
 svc_url="$(get_env MEMORY_SERVICE_URL)"
 svc_url="${svc_url:-http://localhost:7700}"
 health="$(curl -s -m3 "${svc_url}/memory/health" 2>/dev/null)"
 if echo "${health}" | grep -q '"status": *"ok"'; then
     shared="$(echo "${health}" | grep -o '"entries": *[0-9]*' | grep -o '[0-9]*')"
     user="$(echo "${health}" | grep -o '"user_entries": *[0-9]*' | grep -o '[0-9]*')"
-    ok "memory_service answers (${shared:-?} shared / ${user:-?} personal memories)"
+    whoami="$(printf 'x-memory-token: %s\n' "$(get_env MEMORY_SERVICE_TOKEN)" |
+        curl -s -m3 -o /dev/null -w '%{http_code}' -H @- "${svc_url}/memory/whoami" 2>/dev/null)"
+    case "${whoami}" in
+        200) ok "memory_service answers and accepts this kit's token (${shared:-?} shared / ${user:-?} personal memories)" ;;
+        401) bad "memory_service at ${svc_url} REFUSES this kit's token — it is another kit's service, or MEMORY_SERVICE_TOKEN is not one of its MEMORY_USER_TOKENS" ;;
+        *) bad "memory_service at ${svc_url} cannot confirm this kit's token (HTTP ${whoami:-none}) — restart it on the current code; if it still cannot, another kit owns that address" ;;
+    esac
 else
     bad "memory_service does NOT answer at ${svc_url} — no memory over MCP"
 fi
 
+# unit_installed NAME → 0 when systemd knows that exact unit. A unit whose name only contains
+# it, such as another kit's, does not count; and nothing is piped, so a long listing cut short
+# by the reader cannot turn an installed unit into a missing one.
+unit_installed() { [ -n "$(systemctl list-unit-files --no-legend "$1" 2>/dev/null)" ]; }
+
 # 4. The nightly consolidation: unit installed → must be active; timer too
 if systemctl is-active --quiet agent-memory.service 2>/dev/null; then
     ok "unit agent-memory.service active"
-elif systemctl list-unit-files 2>/dev/null | grep -q agent-memory.service; then
+elif unit_installed agent-memory.service; then
     bad "unit agent-memory.service INSTALLED but INACTIVE"
 else
     warn "unit agent-memory.service not installed on this box"
 fi
 if systemctl is-active --quiet agent-memory-consolidate.timer 2>/dev/null; then
     ok "nightly consolidation timer active"
-elif systemctl list-unit-files 2>/dev/null | grep -q agent-memory-consolidate.timer; then
+elif unit_installed agent-memory-consolidate.timer; then
     bad "consolidation timer INSTALLED but INACTIVE — the memory never consolidates"
 else
     warn "consolidation timer not installed (pak memory consolidate by hand)"
@@ -144,7 +160,7 @@ fi
 # 7. OpenCode server unit: installed → active
 if systemctl is-active --quiet opencode-server.service 2>/dev/null; then
     ok "opencode-server active (127.0.0.1:4096)"
-elif systemctl list-unit-files 2>/dev/null | grep -q opencode-server.service; then
+elif unit_installed opencode-server.service; then
     bad "opencode-server INSTALLED but INACTIVE"
 else
     warn "opencode-server not installed (bash bin/install-opencode.sh)"

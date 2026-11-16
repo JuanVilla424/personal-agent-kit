@@ -267,6 +267,7 @@ echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf
 ```bash
 sudo lsof -i :<PORT>
 # kill the conflicting process or change the port in docker-compose.yml
+# the brain's ports are set in .env instead: INSTALL.md, "Own Ports for the Brain"
 ```
 
 **Verification:** `docker compose up` starts without port conflict errors; container shows `healthy` status.

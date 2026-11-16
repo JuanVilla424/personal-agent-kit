@@ -1,5 +1,6 @@
 """system_report/main.py — collectors, renderers and the report assembly."""
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -90,3 +91,79 @@ def test_main_out_writes_the_file(tmp_path, capsys):
     assert main(["--format", "md", "--out", str(dest)]) == 0
     assert dest.exists() and "System report" in dest.read_text()
     assert f"report written to {dest}" in capsys.readouterr().out
+
+
+def test_cpu_load_na_when_os_does_not_expose_it(monkeypatch):
+    """Platforms without getloadavg report n/a instead of crashing."""
+
+    def _raise(*_a):
+        raise AttributeError("no loadavg here")
+
+    monkeypatch.setattr(cpu_info.__globals__["os"], "getloadavg", _raise)
+    assert cpu_info()["load"] == "n/a"
+
+
+def test_memory_falls_back_to_sysconf_without_proc(tmp_path, monkeypatch):
+    """Without /proc/meminfo (non-Linux) the totals come from sysconf."""
+
+    monkeypatch.setattr(memory_info.__globals__["Path"], "exists", lambda self: False)
+
+    def fake_sysconf(name):
+        return {"SC_PAGE_SIZE": 4096, "SC_PHYS_PAGES": 4_000_000}[name]
+
+    monkeypatch.setattr(memory_info.__globals__["os"], "sysconf", fake_sysconf)
+    mem = memory_info()
+    assert mem["total_mib"] == str(4_000_000 * 4096 // 1024 // 1024)
+    assert mem["available_mib"] == "n/a"
+
+
+def test_memory_survives_sysconf_failure(tmp_path, monkeypatch):
+    """A failing sysconf leaves the totals as n/a instead of crashing."""
+
+    monkeypatch.setattr(memory_info.__globals__["Path"], "exists", lambda self: False)
+
+    def _boom(_name):
+        raise OSError("sysconf unavailable")
+
+    monkeypatch.setattr(memory_info.__globals__["os"], "sysconf", _boom)
+    mem = memory_info()
+    assert mem["total_mib"] == "n/a" and mem["available_mib"] == "n/a"
+
+
+def test_disk_info_skips_unreadable_mounts(monkeypatch):
+    """A mount that raises OSError is skipped; the rest survive."""
+
+    import system_report.main as m
+
+    real = m.shutil.disk_usage
+
+    def selective(path):
+        if str(path) == "/":
+            raise OSError("permission denied")
+        return real(path)
+
+    monkeypatch.setattr(m.shutil, "disk_usage", selective)
+    disks = disk_info()
+    assert all(d["mount"] != "/" for d in disks)
+
+
+def test_process_snapshot_returns_empty_when_ps_fails(monkeypatch):
+    """ps unavailable or slow → empty snapshot, never a crash."""
+
+    import system_report.main as m
+
+    def _boom(*_a, **_k):
+        raise subprocess.TimeoutExpired("ps", 10)
+
+    monkeypatch.setattr(m.subprocess, "run", _boom)
+    assert m.process_snapshot() == []
+
+
+def test_main_reports_os_errors_and_returns_one(monkeypatch, capsys):
+    """An OSError while assembling the report prints the error and exits 1."""
+
+    import system_report.main as m
+
+    monkeypatch.setattr(m, "host_identity", lambda: (_ for _ in ()).throw(OSError("disk gone")))
+    assert m.main([]) == 1
+    assert "disk gone" in capsys.readouterr().err

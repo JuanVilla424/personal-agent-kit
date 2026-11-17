@@ -31,7 +31,7 @@ load_dotenv(Path(__file__).resolve().parents[3] / ".env", override=False)
 # 100% local — one memory_service handles both scopes. "scope" is just a field in the
 # request body the server uses to segment shared vs. personal storage, not a routing
 # decision made here (there is no central tier in this fork — see memory-protocol.md).
-LOCAL_URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7700").rstrip("/")
+LOCAL_URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7800").rstrip("/")
 TOKEN = os.getenv("MEMORY_SERVICE_TOKEN", "")
 USER = os.getenv("PAK_INVOKED_BY", "") or getpass.getuser()
 HEADERS = {"X-Memory-Token": TOKEN} if TOKEN else {}

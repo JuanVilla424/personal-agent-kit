@@ -34,10 +34,12 @@ personal-agent-kit/
 ├── local/
 │   ├── hooks/               ← Claude Code hooks and guards
 │   ├── monitoring/          ← Optional Prometheus + Grafana stack
-│   └── scripts/             ← Automation scripts
+│   ├── scripts/             ← Published automation tools (versioned)
 │       ├── notify/          ← Bidirectional Slack bot + outbound notify.py
 │       ├── memory_index/    ← Local Qdrant + memory_service
+│       ├── system_report/   ← Host report — the reference package for new tools
 │       ├── excel_report_generator/
+│   └── developments/        ← Tools the agent builds for THIS user — git-excluded, never published
 │       └── pdf_report_generator/
 ├── scripts/                 ← Tools behind the pre-commit hooks
 ├── helpers/ai18n/           ← JuanVilla424/ai18n submodule (language policy resolver)
@@ -112,7 +114,7 @@ git submodule update --remote helpers/ai18n && git add helpers/ai18n
 ### 💬 Slack bot (`local/scripts/notify/.env`)
 
 ```bash
-cp local/scripts/notify/.env.template local/scripts/notify/.env
+cp local/scripts/notify/.env.example local/scripts/notify/.env
 ```
 
 | Variable                | Description                                         |
@@ -140,15 +142,15 @@ partial context — tell the user instead of assuming.**
 Quick check:
 
 ```bash
-curl -s http://localhost:7633/collections    # local Qdrant
-curl -s http://localhost:7700/memory/health  # local memory_service
+curl -s http://localhost:7733/collections    # local Qdrant
+curl -s http://localhost:7800/memory/health  # local memory_service
 ```
 
 Layer map — what each one stores and what's lost if it fails:
 
 | Layer                                                  | What it stores              | What's lost if it fails           |
 | ------------------------------------------------------ | --------------------------- | --------------------------------- |
-| **Qdrant `agent_memory`** (local, :7633)               | Agent's semantic memory     | Semantic search over past context |
+| **Qdrant `agent_memory`** (local, :7733)               | Agent's semantic memory     | Semantic search over past context |
 | **Lessons** (`~/.pak/lessons.jsonl`, `bin/lessons.py`) | Incidents, controls, expiry | Why a control exists              |
 
 > 💡 The memory is **local** and **does not travel via git**. A fresh install starts empty — it
@@ -181,6 +183,26 @@ ALWAYS created from a template, setup is mandatory (submodules → `.venv` → p
 promotion only via PR with `[patch candidate]`.
 
 ---
+
+## 🧰 Operating scripts — build tools for your user
+
+When the user needs an operational script, build it as a package under `local/scripts/`
+and leave it living there. The workflow, layout and conventions are documented in
+[`local/scripts/README.md`](local/scripts/README.md) — the reference package is
+[`system_report/`](local/scripts/system_report/README.md). Rules: pure stdlib when
+possible, pytest suite mandatory (the repo CI runs it), one README per package, house
+commit format, push to `dev` and let the repo CI validate again.
+
+## 🧪 Personal developments — tools for THIS user
+
+Tools the agent builds for the person using the kit go under `local/developments/` —
+a git-excluded folder that lives only on the box and is **never published**. Same
+package layout as the published tools (`README.md`, `main.py`, `tests/`). If a tool
+grows into something every kit user should have, it graduates to `local/scripts/`
+through a normal commit.
+
+The published tools under `local/scripts/` and their conventions are documented in
+[`local/scripts/README.md`](local/scripts/README.md).
 
 ## 🚀 Slack bot
 
@@ -263,7 +285,7 @@ keyword at the **end** of the commit message:
 | ❌ `rm` or any other delete                                        | ✅ `python3 bin/quarantine.py mv <path>`: a reversible move (the guard blocks deletes) |
 | ❌ Approving your own challenge, editing `configs/auto-guard.json` | ✅ The human approves in a terminal: `python3 bin/auto_guard.py approve <hash>`        |
 | ❌ Modifying files in a submodule                                  | ✅ Changes go to its own repository                                                    |
-| ❌ Committing `.env`                                               | ✅ Only `.env.template`                                                                |
+| ❌ Committing `.env`                                               | ✅ Only `.env.example`                                                                 |
 | ❌ Committing `*.log`                                              | ✅ Covered by `.gitignore`                                                             |
 | ❌ Dumps/exports/exploration output or any loose generated file    | ✅ EVERYTHING generated goes to `temp/` (gitignored) or `/tmp`, never root or tracked  |
 

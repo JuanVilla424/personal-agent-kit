@@ -21,6 +21,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -101,17 +102,42 @@ def check_opencode(home: Path) -> tuple[str, str]:
     return "ok", f"{expected} plugins in every project, OpenCode {pin}"
 
 
-def check_memory() -> tuple[str, str]:
-    url = (
-        os.environ.get("MEMORY_SERVICE_URL", "http://localhost:7700").rstrip("/") + "/memory/health"
-    )
+def kit_setting(key: str, default: str = "") -> str:
+    """A setting the way the kit's tools read it: the environment first, then the root .env."""
+    if os.environ.get(key):
+        return os.environ[key]
     try:
-        with urllib.request.urlopen(url, timeout=HEALTH_TIMEOUT_S) as resp:
+        from dotenv import dotenv_values
+    except ImportError:  # the system python of a checkout that has no .venv yet
+        return default
+    return dotenv_values(REPO_ROOT / ".env").get(key) or default
+
+
+def check_memory() -> tuple[str, str]:
+    base = kit_setting("MEMORY_SERVICE_URL", "http://localhost:7800").rstrip("/")
+    try:
+        with urllib.request.urlopen(base + "/memory/health", timeout=HEALTH_TIMEOUT_S) as resp:
             health = json.loads(resp.read().decode("utf-8"))
     except (OSError, ValueError) as e:
-        return "fail", f"memory_service does not answer at {url} ({type(e).__name__})"
+        return "fail", f"memory_service does not answer at {base} ({type(e).__name__})"
     if health.get("status") != "ok":
         return "fail", f"memory_service degraded: {health.get('error', '?')}"
+    # /memory/health answers anyone: with two kits on one machine, the service on this address
+    # may be the other one's. Only a service that accepts this kit's token is this kit's.
+    whoami = urllib.request.Request(
+        base + "/memory/whoami", headers={"X-Memory-Token": kit_setting("MEMORY_SERVICE_TOKEN")}
+    )
+    try:
+        with urllib.request.urlopen(whoami, timeout=HEALTH_TIMEOUT_S):
+            pass
+    except urllib.error.HTTPError as e:
+        return (
+            "fail",
+            f"memory_service at {base} does not accept this kit's token (HTTP {e.code}): "
+            "another kit's service, a wrong MEMORY_SERVICE_TOKEN, or old code to restart",
+        )
+    except OSError as e:
+        return "fail", f"memory_service at {base} stopped answering ({type(e).__name__})"
     return (
         "ok",
         f"{health.get('user_entries', 0)} personal and {health.get('entries', 0)} shared memories",

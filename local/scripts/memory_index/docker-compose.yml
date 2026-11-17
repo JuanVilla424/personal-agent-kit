@@ -1,12 +1,15 @@
 ---
+# The installer (bin/_lib.sh, setup_local_qdrant) passes these from the root .env. Run by hand
+# with nothing set, it is the kit's own instance: memory-qdrant-7733 on 7733 and 7734.
+name: ${QDRANT_PROJECT:-memory_index_7733}
 services:
   qdrant:
     image: qdrant/qdrant:v1.18.2
-    container_name: memory-qdrant
+    container_name: ${QDRANT_CONTAINER:-memory-qdrant-7733}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:7633:6333"
-      - "127.0.0.1:7634:6334"
+      - "127.0.0.1:${QDRANT_PORT:-7733}:6333"
+      - "127.0.0.1:${QDRANT_GRPC_PORT:-7734}:6334"
     volumes:
       - qdrant_memory_storage:/qdrant/storage
 

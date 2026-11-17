@@ -43,10 +43,10 @@ scrape_configs:
           host: agent-host
 
   # Qdrant — semantic memory (lessons index). Native /metrics.
-  # Reached over the joined memory_index_default network by container DNS name.
+  # Reached over the joined memory_index_7733_default network by container DNS name.
   - job_name: qdrant
     static_configs:
-      - targets: ["memory-qdrant:6333"]
+      - targets: ["memory-qdrant-7733:6333"]
         labels:
           service: qdrant
           host: agent-host

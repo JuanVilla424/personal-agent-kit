@@ -12,6 +12,8 @@ Registers:
   - SessionStart    (any)           -> session-start.sh (temp/ cleanup + orientation.txt injection)
   - Stop            (any)           -> tts_hook.py (speaks the response out loud — docs/stories/tts-hook-persona.md)
   - Notification    (any)           -> tts_hook.py (speaks permission requests out loud)
+  - PreToolUse, UserPromptSubmit, PreCompact, SessionStart, SessionEnd (any) -> brain-emit.py
+    (one pulse on the brain page for each; it only observes)
 
 Removes superseded global hooks (e.g. ~/.claude/hooks/pre-write-validation.sh, now
 replaced by pre-write-guard.sh; ~/.claude/hooks/check-tokens.sh, now replaced by
@@ -45,6 +47,17 @@ MANAGED = [
     ("SessionStart", "", str(REPO_ROOT / ".claude" / "hooks" / "session-start.sh"), 10000),
     ("Stop", "", str(REPO_ROOT / ".claude" / "hooks" / "tts_hook.py"), 5000),
     ("Notification", "", str(REPO_ROOT / ".claude" / "hooks" / "tts_hook.py"), 5000),
+]
+
+# Hooks that only watch, registered like the rest: the brain page gets one pulse for every tool
+# call, prompt, compaction and session boundary. A list of its own, because the worker's
+# container takes its guards from MANAGED (bin/pak_worker.py) and an observer is not one.
+OBSERVERS = [
+    ("PreToolUse", "", str(HOOKS_DIR / "brain-emit.py"), 5000),
+    ("UserPromptSubmit", "", str(HOOKS_DIR / "brain-emit.py"), 5000),
+    ("PreCompact", "manual|auto", str(HOOKS_DIR / "brain-emit.py"), 5000),
+    ("SessionStart", "", str(HOOKS_DIR / "brain-emit.py"), 5000),
+    ("SessionEnd", "", str(HOOKS_DIR / "brain-emit.py"), 5000),
 ]
 
 # Command basenames these supersede — removed from any event if found.
@@ -89,7 +102,7 @@ def main() -> None:
     hooks = settings.setdefault("hooks", {})
     for event in list(hooks):  # strip superseded everywhere first
         hooks[event] = _without_superseded(hooks[event])
-    for event, matcher, command, timeout in MANAGED:
+    for event, matcher, command, timeout in MANAGED + OBSERVERS:
         hooks[event] = _ensure(hooks.get(event, []), matcher, command, timeout)
     for event in [e for e, v in hooks.items() if not v]:  # drop empty events
         del hooks[event]

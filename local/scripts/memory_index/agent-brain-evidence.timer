@@ -1,0 +1,9 @@
+[Unit]
+Description=Weekly brain evidence for the Personal Agent Kit (inside the brain page's freshness windows)
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

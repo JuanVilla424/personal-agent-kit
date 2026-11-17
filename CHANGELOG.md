@@ -1,3 +1,29 @@
+## [1.0.8] - 2026-11-17
+
+### Features
+
+- **core**: add the brain page with its live stream of what the agent does (`patch candidate`)
+- **core**: add the operating scripts capability with the system report reference package
+
+### Bug Fixes
+
+- **core**: pin the changelog tests to a fixed utc date and use the builtin release token
+
+### Documentation
+
+- **core**: show the developments folder in the structure tree
+- **core**: add the personal developments folder for unpublished agent tools
+- **core**: relicense under apache 2.0 for public use
+
+### Tests
+
+- **core**: cover the system report fallback branches
+- **core**: cover the system report fallback branches
+
+### Chores
+
+- **core**: bump version 1.0.7 → 1.0.7 retrigger promotion
+
 ## [1.0.7] - 2026-11-14
 
 ### Chores

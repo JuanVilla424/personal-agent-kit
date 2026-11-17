@@ -1,5 +1,5 @@
 # agent-memory-service — the local agent-memory API and the SINGLE writer of
-# the `agent_memory` Qdrant collection. FastAPI + uvicorn on :7700, server-side
+# the `agent_memory` Qdrant collection. FastAPI + uvicorn on :7800, server-side
 # embedding via fastembed (384-dim). Optional: run this as a long-running container
 # if you'd rather isolate it than run it as a plain local process (see the repo README).
 #
@@ -17,7 +17,7 @@ RUN useradd -m -r usrapp
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    MEMORY_SERVICE_PORT=7700 \
+    MEMORY_SERVICE_PORT=7800 \
     EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 
 WORKDIR /app
@@ -39,5 +39,5 @@ RUN python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='${
 RUN chown -R usrapp:usrapp /app
 USER usrapp
 
-EXPOSE 7700
+EXPOSE 7800
 CMD ["python", "/app/local/scripts/memory_index/memory_service.py"]

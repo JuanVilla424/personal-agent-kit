@@ -16,13 +16,13 @@ symptom description before falling back to a manual read of the docs.
 docs/TROUBLESHOOTING.md         ──┐──► Chunker ──► fastembed (multilingual-e5-small)
 docs/SETUP-TROUBLESHOOTING.md   ──┘                     │
                                                          ▼
-                                              Qdrant :7633 (local Docker)
+                                              Qdrant :7733 (local Docker)
                                                          │
                                                 query → top-K results
 ```
 
 - **Embeddings**: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` via `fastembed` (ONNX, offline, ~220 MB cache, 50 languages).
-- **Vector store**: Qdrant running in Docker on port `7633` (REST) / `7634` (gRPC).
+- **Vector store**: Qdrant running in Docker on port `7733` (REST) / `7734` (gRPC).
 - **Chunking**: splits docs by `##` / `###` markdown headers; each chunk ≤ 2000 chars.
 - **IDs**: deterministic SHA-256 → UUID per `source::section` pair — re-indexing is idempotent.
 
@@ -40,7 +40,7 @@ docs/SETUP-TROUBLESHOOTING.md   ──┘                     │
 docker compose -f local/scripts/memory_index/docker-compose.yml up -d
 ```
 
-Qdrant REST API will be available at `http://localhost:7633`.
+Qdrant REST API will be available at `http://localhost:7733`.
 
 ### 2. Install dependencies
 
@@ -71,12 +71,12 @@ Qdrant REST API will be available at `http://localhost:7633`.
 
 ## ⚙️ Configuration
 
-Copy `.env.template` to `.env` to override defaults:
+Copy `.env.example` to `.env` to override defaults:
 
 | Variable            | Default                                                       | Description                         |
 | ------------------- | ------------------------------------------------------------- | ----------------------------------- |
 | `QDRANT_HOST`       | `localhost`                                                   | Qdrant host                         |
-| `QDRANT_PORT`       | `7633`                                                        | Qdrant REST port                    |
+| `QDRANT_PORT`       | `7733`                                                        | Qdrant REST port                    |
 | `QDRANT_COLLECTION` | `runbooks`                                                    | Collection name                     |
 | `EMBEDDING_MODEL`   | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | fastembed model                     |
 | `DOCS_ROOT`         | auto-detected                                                 | Absolute path to `docs/`            |

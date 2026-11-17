@@ -4,17 +4,43 @@ import json
 import os
 import re
 import shutil
+import socket
 import stat
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
 
+import memory_service_stub as stub
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALL = REPO_ROOT / "bin" / "install.sh"
 LIB = REPO_ROOT / "bin" / "_lib.sh"
+COMPOSE = REPO_ROOT / "local" / "scripts" / "memory_index" / "docker-compose.yml"
 TIMEOUT_SECONDS = 60
 OWN_AGENTS = {"infra-agent", "security-agent", "reports-agent", "database"}
+# A docker that answers from the environment and logs every call, so the brain's Qdrant step runs
+# without a daemon: whose compose created the Qdrant found by name (FAKE_NAMED_OWNER) or by
+# published port (FAKE_PORT_OWNER), and which containers are running (FAKE_RUNNING).
+FAKE_DOCKER = """#!/bin/bash
+echo "$*" >> "$FAKE_LOG"
+case "$1" in
+    inspect) [ -n "$FAKE_NAMED_OWNER" ] && echo "$FAKE_NAMED_OWNER" || exit 1 ;;
+    ps)
+        case "$*" in
+            *publish=*) echo "$FAKE_PORT_OWNER" ;;
+            *) for name in $FAKE_RUNNING; do echo "$name"; done ;;
+        esac ;;
+    compose)
+        while [ $# -gt 0 ]; do
+            [ "$1" = "--env-file" ] && cat "$2" >> "$FAKE_LOG"
+            shift
+        done ;;
+esac
+exit 0
+"""
 
 
 def _run_installer(*args: str) -> subprocess.CompletedProcess:
@@ -196,7 +222,7 @@ def test_units_render_for_any_user_and_any_checkout_path(unit, tmp_path):
 
 
 def test_env_file_is_rendered_private_and_never_overwritten(tmp_path):
-    shutil.copy(REPO_ROOT / ".env.template", tmp_path / ".env.template")
+    shutil.copy(REPO_ROOT / ".env.example", tmp_path / ".env.example")
 
     assert _lib("setup_env_file", tmp_path).returncode == 0
 
@@ -212,7 +238,7 @@ def test_env_file_is_rendered_private_and_never_overwritten(tmp_path):
 
 def test_a_template_env_gets_a_real_token(tmp_path):
     """The tokens of the template's own comments must never count as configured auth."""
-    shutil.copy(REPO_ROOT / ".env.template", tmp_path / ".env")
+    shutil.copy(REPO_ROOT / ".env.example", tmp_path / ".env")
     (tmp_path / ".venv").symlink_to(REPO_ROOT / ".venv")
 
     configured = _lib(
@@ -223,6 +249,234 @@ def test_a_template_env_gets_a_real_token(tmp_path):
 
     assert configured.returncode != 0
     assert no_auth.returncode != 0
+
+
+def _brain_checkout(checkout: Path, env: str | None = None) -> Path:
+    """A scratch checkout with the root .env the brain setup reads, on the kit's own .venv."""
+    checkout.mkdir(parents=True)
+    (checkout / ".venv").symlink_to(REPO_ROOT / ".venv")
+    if env is not None:
+        (checkout / ".env").write_text(env, encoding="utf-8")
+    return checkout
+
+
+def _setup_qdrant(checkout: Path, scratch: Path, **docker: str):
+    """Run the brain's Qdrant step against the fake docker: its result and docker's calls."""
+    fake = scratch / "fake-bin"
+    fake.mkdir()
+    (fake / "docker").write_text(FAKE_DOCKER, encoding="utf-8")
+    (fake / "docker").chmod(0o755)
+    log = scratch / "docker.log"
+    log.touch()
+    result = _lib(
+        "PAK_WITH_BRAIN=1; install_tool_deps() { :; }; setup_local_qdrant;"
+        ' echo "LOCAL_BRAIN=$LOCAL_BRAIN"',
+        checkout,
+        PATH=f"{fake}:{os.environ['PATH']}",
+        FAKE_LOG=str(log),
+        **docker,
+    )
+    return result, log.read_text(encoding="utf-8").splitlines()
+
+
+def _free_ports(count: int) -> list[int]:
+    """Loopback ports nothing holds, all different (they are picked while every one is bound)."""
+    holders = [socket.socket() for _ in range(count)]
+    try:
+        for holder in holders:
+            holder.bind(("127.0.0.1", 0))
+        return [holder.getsockname()[1] for holder in holders]
+    finally:
+        for holder in holders:
+            holder.close()
+
+
+def _listener(port: int, cwd: Path, script: Path | None = None) -> subprocess.Popen:
+    """A process holding a loopback port, started from `cwd`, or from a script by its path."""
+    command = [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"]
+    if script:
+        command = [sys.executable, str(script), str(port)]
+    process = subprocess.Popen(  # pylint: disable=consider-using-with
+        command, cwd=cwd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        with socket.socket() as probe:
+            if probe.connect_ex(("127.0.0.1", port)) == 0:
+                return process
+        time.sleep(0.05)
+    process.kill()
+    raise AssertionError(f"nothing listened on {port}")
+
+
+@pytest.mark.parametrize(
+    ("env", "resolved"),
+    [
+        (None, "7733 7800 memory-qdrant-7733 memory_index_7733"),
+        ("QDRANT_PORT=7633\nMEMORY_SERVICE_PORT=7700\n", "7633 7700 memory-qdrant memory_index"),
+        (
+            'QDRANT_PORT="7833"  # next to another kit\nMEMORY_SERVICE_PORT=7900\n',
+            "7833 7900 memory-qdrant-7833 memory_index_7833",
+        ),
+    ],
+)
+def test_the_brain_takes_its_ports_and_its_names_from_the_env_file(tmp_path, env, resolved):
+    checkout = _brain_checkout(tmp_path / "kit", env)
+    shown = _lib(
+        'brain_ports; echo "$QDRANT_PORT $MEMSVC_PORT $QDRANT_CONTAINER $QDRANT_PROJECT"', checkout
+    )
+    assert shown.stdout.strip() == resolved
+
+
+def test_the_qdrant_compose_is_the_default_instance_until_it_is_given_ports(tmp_path):
+    if shutil.which("docker") is None:
+        pytest.skip("needs the docker client")
+
+    def config(*args: str) -> dict:
+        shown = subprocess.run(
+            ["docker", "compose", *args, "-f", str(COMPOSE), "config", "--format", "json"],
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SECONDS,
+            env={"PATH": os.environ["PATH"], "HOME": str(tmp_path)},
+            check=False,
+        )
+        if shown.returncode != 0:
+            pytest.skip(f"needs the docker compose plugin: {shown.stderr.strip()[:120]}")
+        return json.loads(shown.stdout)
+
+    default = config()
+    assert default["name"] == "memory_index_7733"
+    assert default["services"]["qdrant"]["container_name"] == "memory-qdrant-7733"
+    assert [str(p["published"]) for p in default["services"]["qdrant"]["ports"]] == ["7733", "7734"]
+
+    given = tmp_path / "compose.env"
+    given.write_text(
+        "QDRANT_PORT=7833\nQDRANT_GRPC_PORT=7834\nQDRANT_CONTAINER=memory-qdrant-7833\n",
+        encoding="utf-8",
+    )
+    own = config("--env-file", str(given), "-p", "memory_index_7833")
+    assert own["services"]["qdrant"]["container_name"] == "memory-qdrant-7833"
+    assert [str(p["published"]) for p in own["services"]["qdrant"]["ports"]] == ["7833", "7834"]
+    volumes = (default["volumes"], own["volumes"])
+    assert [v["qdrant_memory_storage"]["name"] for v in volumes] == [
+        "memory_index_7733_qdrant_memory_storage",
+        "memory_index_7833_qdrant_memory_storage",
+    ]
+
+
+@pytest.mark.parametrize("found_by", ["FAKE_NAMED_OWNER", "FAKE_PORT_OWNER"])
+def test_the_qdrant_of_another_checkout_is_never_adopted(tmp_path, found_by):
+    checkout = _brain_checkout(tmp_path / "kit")
+    theirs = "/srv/other-kit/local/scripts/memory_index"
+    result, calls = _setup_qdrant(
+        checkout, tmp_path, FAKE_RUNNING="memory-qdrant", **{found_by: theirs}
+    )
+    assert "LOCAL_BRAIN=0" in result.stdout
+    assert f"belongs to another checkout ({theirs})" in result.stdout
+    assert not [call for call in calls if call.endswith("up -d")]
+
+
+@pytest.mark.parametrize(
+    ("env", "port"), [(None, "7733"), ("QDRANT_PORT=7833\nMEMORY_SERVICE_PORT=7900\n", "7833")]
+)
+def test_each_kit_gets_a_qdrant_of_its_own_on_its_ports(tmp_path, env, port):
+    checkout = _brain_checkout(tmp_path / "kit", env)
+    # the Qdrant of an install from the first versions is running: it is not this kit's
+    result, calls = _setup_qdrant(checkout, tmp_path, FAKE_RUNNING="memory-qdrant")
+    assert "LOCAL_BRAIN=1" in result.stdout
+    started = [call for call in calls if call.endswith("up -d")]
+    assert len(started) == 1 and f" -p memory_index_{port} " in started[0]
+    grpc = str(int(port) + 1)
+    given = {
+        f"QDRANT_PORT={port}",
+        f"QDRANT_GRPC_PORT={grpc}",
+        f"QDRANT_CONTAINER=memory-qdrant-{port}",
+    }
+    assert given <= set(calls)
+
+
+def test_its_own_running_qdrant_is_left_as_it_is(tmp_path):
+    checkout = _brain_checkout(tmp_path / "kit")
+    result, calls = _setup_qdrant(
+        checkout,
+        tmp_path,
+        FAKE_RUNNING="memory-qdrant-7733",
+        FAKE_NAMED_OWNER=f"{checkout}/local/scripts/memory_index",
+    )
+    assert "LOCAL_BRAIN=1" in result.stdout and "already running" in result.stdout
+    assert not [call for call in calls if call.endswith("up -d")]
+
+
+def test_a_port_that_is_not_a_number_stops_the_brain_setup(tmp_path):
+    checkout = _brain_checkout(tmp_path / "kit", "QDRANT_PORT=qdrant\n")
+    result, calls = _setup_qdrant(checkout, tmp_path)
+    assert "LOCAL_BRAIN=0" in result.stdout and "must be numbers" in result.stdout
+    assert not [call for call in calls if call.endswith("up -d")]
+
+
+def test_only_a_process_of_this_checkout_is_stopped_to_free_the_port(tmp_path):
+    if shutil.which("fuser") is None:
+        pytest.skip("needs fuser (psmisc)")
+    checkout, elsewhere = tmp_path / "kit", tmp_path / "elsewhere"
+    checkout.mkdir()
+    elsewhere.mkdir()
+    served = checkout / "serve.py"
+    served.write_text(
+        "import http.server, sys\n"
+        "http.server.test(http.server.SimpleHTTPRequestHandler,"
+        " port=int(sys.argv[1]), bind='127.0.0.1')\n",
+        encoding="utf-8",
+    )
+    ports = _free_ports(3)
+    mine = _listener(ports[0], checkout)  # started inside this checkout
+    mine_by_path = _listener(ports[1], elsewhere, served)  # started elsewhere, from its file
+    theirs = _listener(ports[2], elsewhere)  # another kit's service
+    try:
+        freed = _lib(" ".join(f"free_own_port {port};" for port in ports), checkout)
+        assert freed.returncode == 0
+        assert mine.wait(timeout=10) != 0 and mine_by_path.wait(timeout=10) != 0
+        assert theirs.poll() is None
+    finally:
+        for process in (mine, mine_by_path, theirs):
+            process.kill()
+            process.wait()
+
+
+@pytest.mark.parametrize(
+    ("service", "token", "found"),
+    [
+        ({}, "tok_mine", True),
+        ({}, "tok_of_another_kit", False),
+        ({"whoami": False}, "tok_mine", False),
+    ],
+)
+def test_the_installer_waits_for_its_own_service_not_for_whatever_answers(
+    tmp_path, service, token, found
+):
+    with stub.running(**service) as port:
+        checkout = _brain_checkout(
+            tmp_path / "kit", f"MEMORY_SERVICE_PORT={port}\nMEMORY_SERVICE_TOKEN={token}\n"
+        )
+        waited = _lib("MEMORY_SERVICE_WAIT_TRIES=1; sleep() { :; }; wait_memory_service", checkout)
+    assert (waited.returncode == 0) is found
+
+
+def test_the_installer_makes_the_service_fetch_its_embedding_model(tmp_path):
+    """The model comes down on the first search, longer than a client waits: the installer
+    makes that search itself, with this kit's token, so the user's first one works."""
+    asked: list[str] = []
+    with stub.running(asked=asked) as port:
+        checkout = _brain_checkout(
+            tmp_path / "kit", f"MEMORY_SERVICE_PORT={port}\nMEMORY_SERVICE_TOKEN=tok_mine\n"
+        )
+        assert _lib("warm_memory_model", checkout).returncode == 0
+        assert [path.split("?")[0] for path in asked] == ["/memory/search"]
+        (checkout / ".env").write_text(
+            f"MEMORY_SERVICE_PORT={port}\nMEMORY_SERVICE_TOKEN=tok_of_another_kit\n",
+            encoding="utf-8",
+        )
+        assert _lib("warm_memory_model", checkout).returncode != 0
 
 
 def _policy_in(checkout: Path) -> dict:

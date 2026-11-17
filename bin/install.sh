@@ -40,7 +40,7 @@ setup_local_qdrant
 # ── 3. Local memory_service (systemd, writer for personal memory) ──
 # The service is fail-closed: it won't start without auth. Auth is GUARANTEED here: if
 # missing, the key is generated and set COMPLETELY (coherent MEMORY_SERVICE_TOKEN +
-# MEMORY_USER_TOKENS) — :7700 ALWAYS ends up configured and running, with startup
+# MEMORY_USER_TOKENS) — the service ALWAYS ends up configured and running, with startup
 # retried here and self-repair during verification.
 sep; echo -e "${CYAN}[3/9] Local memory_service (systemd — personal + search)${NC}"
 setup_memory_service_local
@@ -140,16 +140,21 @@ done
 # are already set for the summary below.
 sep; echo -e "${CYAN}[9/9] Verification and summary${NC}"
 v_local=1 v_svc=1
+brain_ports
 if [ "${LOCAL_BRAIN:-0}" = "1" ]; then
-    curl -s -m3 http://localhost:7633/collections >/dev/null 2>&1 && ok "Local Qdrant responds (:7633)" || { warn "Local Qdrant not responding"; v_local=0; }
+    curl -s -m3 "http://localhost:$QDRANT_PORT/collections" >/dev/null 2>&1 && ok "Local Qdrant responds (:$QDRANT_PORT)" || { warn "Local Qdrant not responding (:$QDRANT_PORT)"; v_local=0; }
 else
     info "Local brain skipped — skipping its verification"; v_local=skip
 fi
 if [ "${LOCAL_MEMSVC:-0}" = "1" ]; then
     if [ "$v_local" = "1" ] && wait_memory_service; then
-        ok "Local memory_service responds (:7700)"
+        ok "Local memory_service responds (:$MEMSVC_PORT)"
+        info "Embedding model: a first install downloads it (a few hundred MB)..."
+        warm_memory_model && ok "Embedding model ready" \
+            || warn "Embedding model not fetched yet — the first save or search will wait for it"
+        seed_brain_evidence
     else
-        warn "Local memory_service not responding (:7700)"
+        warn "Local memory_service not responding (:$MEMSVC_PORT)"
         v_svc=0
     fi
 else
@@ -164,7 +169,7 @@ echo ""
 mark() { [ "$1" = "1" ] && echo -e "  ${GREEN}✔${NC}  $2" || { [ "$1" = "skip" ] && echo -e "  ${YELLOW}–${NC}  $2" || echo -e "  ${RED}✘${NC}  $2"; }; }
 mark 1            "Base:           tools, Claude Code, .venv, submodules, .env, hooks"
 mark "$v_local"   "Local brain:    Qdrant (personal memory)"
-mark "$v_svc"     "Local service:  memory_service via systemd (:7700 — personal + search)"
+mark "$v_svc"     "Local service:  memory_service via systemd (:$MEMSVC_PORT — personal + search)"
 if bmad_active; then
     mark 1        "BMAD:           active (commands, subagents, OpenCode agents)"
 else

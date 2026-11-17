@@ -1,0 +1,47 @@
+{
+  "_comment": "Tool to region map of the brain page. Single source for local/hooks/brain-emit.py: every move of the agent produces ONE pulse through here. Valid regions: dlpfc, apfc, ofc, atl, post, hip, tha, amy, bg, cb, vta, hypo. Rationale: dlpfc=working memory · apfc=executive control · ofc=checking against what is real · atl=semantic memory · post=episodic memory and perception · hip=encoding · tha=replay · amy=salience (an error, the human) · bg=procedural (execute) · cb=reflexes (the guards) · vta=forgetting · hypo=homeostatic alarm (compaction). An MCP tool is named without its mcp__ prefix, with single underscores.",
+  "pre": {
+    "Bash": ["dlpfc", "bg"],
+    "Write": ["dlpfc", "bg"],
+    "Edit": ["dlpfc", "bg"],
+    "NotebookEdit": ["dlpfc", "bg"],
+    "Read": ["dlpfc"],
+    "Grep": ["dlpfc", "atl"],
+    "Glob": ["dlpfc", "atl"],
+    "Task": ["apfc", "bg"],
+    "Agent": ["apfc", "bg"],
+    "TodoWrite": ["dlpfc"],
+    "WebFetch": ["ofc", "atl"],
+    "WebSearch": ["ofc", "atl"],
+    "Skill": ["bg"],
+    "memory_memory_add": ["hip"],
+    "memory_memory_search": ["hip", "post"],
+    "memory_memory_forget": ["vta"],
+    "decision_decide": ["apfc"],
+    "decision_guard_mutation": ["apfc", "amy"],
+    "decision_route_agent": ["apfc"],
+    "decision_route_model": ["apfc"],
+    "decision_triage": ["apfc", "amy"]
+  },
+  "defaults": {
+    "pre": ["dlpfc"],
+    "human_prompt": ["amy", "dlpfc"],
+    "compact": ["hypo", "tha", "hypo", "amy"],
+    "session_start": ["tha", "dlpfc"],
+    "session_end": ["hip", "vta"]
+  },
+  "tool_side": {
+    "Write": "L",
+    "Edit": "L",
+    "NotebookEdit": "L",
+    "TodoWrite": "L",
+    "memory_memory_add": "L",
+    "Read": "R",
+    "Grep": "R",
+    "Glob": "R",
+    "WebFetch": "R",
+    "WebSearch": "R",
+    "memory_memory_search": "R",
+    "memory_memory_forget": "both"
+  }
+}

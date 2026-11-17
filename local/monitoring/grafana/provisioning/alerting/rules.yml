@@ -182,7 +182,7 @@ groups:
         execErrState: OK
         labels: { severity: critical }
         annotations:
-          summary: 'Qdrant is down — the agent memory and runbook index are not responding (scrape to memory-qdrant:6333 is failing).'
+          summary: 'Qdrant is down — the agent memory and runbook index are not responding (scrape to memory-qdrant-7733:6333 is failing).'
         data:
           - refId: A
             relativeTimeRange: { from: 600, to: 0 }

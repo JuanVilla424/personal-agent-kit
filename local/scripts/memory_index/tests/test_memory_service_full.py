@@ -164,6 +164,20 @@ class TestHealth:
         assert client.get("/memory/health").json()["status"] == "degraded"
 
 
+class TestWhoami:
+    def test_a_known_token_is_told_who_it_is(self, monkeypatch):
+        fake = MagicMock()
+        client = _client(monkeypatch, fake)
+        assert client.get("/memory/whoami", headers=JUAN).json() == {"user": "juan", "admin": False}
+        assert client.get("/memory/whoami", headers=ADMIN).json()["admin"] is True
+        assert not fake.mock_calls  # it proves the token and reads no memory
+
+    @pytest.mark.parametrize("headers", [{}, {"X-Memory-Token": "tok_of_another_kit"}])
+    def test_a_token_of_another_kit_is_refused(self, monkeypatch, headers):
+        client = _client(monkeypatch, MagicMock())
+        assert client.get("/memory/whoami", headers=headers).status_code == 401
+
+
 class TestHelpers:
     def test_embed_model_lazy_cached(self, monkeypatch):
         monkeypatch.setattr(ms, "_model", None)

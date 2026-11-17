@@ -35,7 +35,7 @@ bound on the host.
 
 ## Getting Started
 
-1. `cp .env.template .env` and set the Grafana admin credentials
+1. `cp .env.example .env` and set the Grafana admin credentials
 2. `docker compose up -d`
 3. Open http://localhost:9392 (login with credentials from `.env`)
 

@@ -3,10 +3,10 @@
 ![CI/CD](https://img.shields.io/badge/CI/CD-Pipeline-blue)
 ![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.8-blue.svg)
 ![Build Status](https://github.com/JuanVilla424/personal-agent-kit/actions/workflows/ci.yml/badge.svg?branch=dev)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)
-![License](https://img.shields.io/badge/license-Proprietary-red.svg)
+![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)
 
 **Personal Agent Kit** (PAK) is a brain and governance layer for Claude Code and OpenCode: a local
 memory, guards that run before an action, versioned protocols and a team of personas. It has no
@@ -177,6 +177,9 @@ in `SLACK_CHANNEL_IDS`, and nobody while either is empty.
      autonomous worker, which runs it in a container and returns a reviewed patch, never a commit.
    - `pak snapshot list` and `pak snapshot restore <id>` bring back a copy of the repository from
      before a session or a challenge.
+   - The brain page, `http://localhost:7800/brain/` (the port is `MEMORY_SERVICE_PORT`), draws
+     every move of a session as a pulse on a 3D brain and shows the evidence behind each region.
+     It is served to this machine only; from anywhere else, reach it through an SSH tunnel.
 
 2. **Open in the AI tool**
    - Open the `personal-agent-kit` directory in Claude Code or OpenCode.
@@ -252,5 +255,4 @@ For any inquiries or support, please open an issue or contact [r6ty5r296it6tl4eg
 
 ## 📜 License
 
-2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE)
-file included in this repository.
+Released under the [Apache License 2.0](LICENSE). Use it, modify it, ship it — attribution appreciated.

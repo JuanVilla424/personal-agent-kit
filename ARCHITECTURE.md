@@ -40,8 +40,8 @@ the kit creates no Linux user.
 
 - **Language**: Python 3.11+ for services and hooks, Bash for installers and guards, JavaScript
   (Bun) for OpenCode plugins.
-- **Memory**: Qdrant `v1.18.2` in Docker, bound to `127.0.0.1:7633`, and a FastAPI service on
-  `:7700`. Embeddings run locally with fastembed.
+- **Memory**: Qdrant `v1.18.2` in Docker, bound to `127.0.0.1:7733`, and a FastAPI service on
+  `:7800`. Embeddings run locally with fastembed.
 - **Engines**: Claude Code and OpenCode.
 
 ### 🏭 Infrastructure
@@ -242,5 +242,4 @@ on the host stays out. A task that needs a package index must list it in `PAK_WO
 
 ## 📜 License
 
-2026 — This is private, proprietary software. All rights reserved. See the [LICENSE](LICENSE) file
-included in this repository.
+Released under the [Apache License 2.0](LICENSE). Use it, modify it, ship it — attribution appreciated.

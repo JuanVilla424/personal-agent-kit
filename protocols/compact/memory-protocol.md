@@ -6,14 +6,14 @@
 
 Two layers; if one is down → **tell the user, don't assume**:
 
-- **Qdrant `agent_memory`** (local, :7633) — agent's semantic memory.
+- **Qdrant `agent_memory`** (local, :7733) — agent's semantic memory.
 - **Knowledge graph** (`~/.claude/projects/<repo-hash>/memory`) — learned preferences/rules.
 
 ## Health (per task)
 
 ```bash
-curl -s http://localhost:7633/collections
-curl -s http://localhost:7700/memory/health
+curl -s http://localhost:7733/collections
+curl -s http://localhost:7800/memory/health
 ```
 
 Run before memory-dependent tasks. A layer down → tell the user, don't assume full context.

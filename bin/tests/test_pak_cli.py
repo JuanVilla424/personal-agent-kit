@@ -9,6 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
 
+import memory_service_stub as stub  # noqa: E402
 import pak_cli as cli  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
@@ -39,6 +40,51 @@ def test_opencode_is_off_until_configured_then_needs_every_plugin(tmp_path, monk
 def test_memory_check_reports_a_service_that_does_not_answer(monkeypatch):
     monkeypatch.setenv("MEMORY_SERVICE_URL", "http://127.0.0.1:9")
     assert cli.check_memory()[0] == "fail"
+
+
+@pytest.mark.parametrize(
+    ("service", "status"),
+    [({}, "ok"), ({"token": "tok_of_another_kit"}, "fail"), ({"whoami": False}, "fail")],
+)
+def test_memory_check_counts_only_a_service_that_accepts_this_kits_token(
+    monkeypatch, service, status
+):
+    """With two kits on one machine, the service on the kit's address may be the other one's."""
+    monkeypatch.setenv("MEMORY_SERVICE_TOKEN", "tok_mine")
+    with stub.running(**service) as port:
+        monkeypatch.setenv("MEMORY_SERVICE_URL", f"http://127.0.0.1:{port}")
+        found, detail = cli.check_memory()
+    assert found == status
+    assert ("this kit's token" in detail) is (status == "fail")
+
+
+def test_memory_check_reports_a_service_that_stops_answering(monkeypatch):
+    """Health answered and then the address went quiet: not healthy, and not a token problem."""
+    opened = cli.urllib.request.urlopen
+
+    def drops_the_second_call(target, **kwargs):
+        if isinstance(target, str):
+            return opened(target, **kwargs)
+        raise ConnectionResetError("gone")
+
+    with stub.running() as port:
+        monkeypatch.setenv("MEMORY_SERVICE_URL", f"http://127.0.0.1:{port}")
+        monkeypatch.setattr(cli.urllib.request, "urlopen", drops_the_second_call)
+        found, detail = cli.check_memory()
+    assert found == "fail" and "stopped answering (ConnectionResetError)" in detail
+
+
+def test_a_setting_is_read_from_the_environment_then_from_the_kits_env_file(monkeypatch, tmp_path):
+    (tmp_path / ".env").write_text("MEMORY_SERVICE_URL=http://localhost:7800\n", encoding="utf-8")
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
+    monkeypatch.delenv("MEMORY_SERVICE_URL", raising=False)
+    monkeypatch.delenv("MEMORY_SERVICE_PORT", raising=False)
+    assert cli.kit_setting("MEMORY_SERVICE_URL", "unset") == "http://localhost:7800"
+    assert cli.kit_setting("MEMORY_SERVICE_PORT", "unset") == "unset"
+    monkeypatch.setitem(sys.modules, "dotenv", None)  # a checkout with no .venv yet
+    assert cli.kit_setting("MEMORY_SERVICE_URL", "unset") == "unset"
+    monkeypatch.setenv("MEMORY_SERVICE_URL", "http://localhost:9")
+    assert cli.kit_setting("MEMORY_SERVICE_URL", "unset") == "http://localhost:9"
 
 
 def test_slack_is_closed_until_both_lists_are_set(monkeypatch, tmp_path):

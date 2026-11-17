@@ -7,6 +7,7 @@ file — real end-to-end run of the real function, never touching the real
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 INSTALL_HOOKS = Path(__file__).resolve().parent.parent / "install-hooks.py"
@@ -128,3 +129,38 @@ def test_main_removes_superseded_hooks_on_existing_settings(tmp_path, monkeypatc
     hooks = json.loads(settings_file.read_text())["hooks"]
     commands = [h["command"] for group in hooks.get("Bash", []) for h in group["hooks"]]
     assert "/old/check-tokens.sh" not in commands
+
+
+# ── the registered commands can run ───────────────────────────────────────
+
+
+def test_every_managed_hook_can_be_executed():
+    """A hook is registered by its path and run as it is: without the exec bit it fails with
+    "Permission denied" on every event it is registered for, on every machine."""
+    registered = install_hooks.MANAGED + install_hooks.OBSERVERS
+    commands = {command for _event, _matcher, command, _timeout in registered}
+    assert not sorted(command for command in commands if not os.access(command, os.X_OK))
+
+
+def test_the_brain_observer_is_registered_but_is_not_one_of_the_guards(tmp_path, monkeypatch):
+    """The worker's container takes its guards from MANAGED: a hook that only watches would be
+    registered there for a file the container does not have."""
+    settings_file = tmp_path / "settings.json"
+    monkeypatch.setattr(install_hooks, "SETTINGS", settings_file)
+    install_hooks.main()
+    hooks = json.loads(settings_file.read_text())["hooks"]
+    watching = {
+        event
+        for event, groups in hooks.items()
+        for group in groups
+        for hook in group["hooks"]
+        if hook["command"].endswith("/brain-emit.py")
+    }
+    assert watching == {
+        "PreToolUse",
+        "UserPromptSubmit",
+        "PreCompact",
+        "SessionStart",
+        "SessionEnd",
+    }
+    assert not [entry for entry in install_hooks.MANAGED if entry[2].endswith("/brain-emit.py")]

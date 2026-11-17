@@ -53,6 +53,7 @@ OPENCODE_SERVER_URL="http://127.0.0.1:4096/"
 OPENCODE_SERVER_WAIT_TRIES=20
 NODE_MAJOR_VERSION=24
 MEMORY_SERVICE_WAIT_TRIES=60
+MEMORY_MODEL_WAIT_SECONDS=600
 BMAD_CLAUDE_DIR=".bmad/integrations/claude"
 # Language tags the ai18n standard accepts (helpers/ai18n/SPEC.md, section 4).
 LANGUAGE_TAG_RE='^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$'
@@ -528,7 +529,7 @@ setup_hooks() {
 }
 
 # render_placeholders FILE → prints FILE for this user and this checkout. The repo's templates
-# (.env.template, *.service) carry <user>, /home/<user> and <opencode-bin> placeholders.
+# (.env.example, *.service) carry <user>, /home/<user> and <opencode-bin> placeholders.
 render_placeholders() {
     local claude_bin
     claude_bin="$(command -v claude 2>/dev/null || true)"
@@ -554,7 +555,7 @@ setup_slack() {
     if [ -f "$dir/.env" ]; then
         ok "$SLACK_DIR_REL/.env already exists — no changes"
     else
-        (umask 077 && render_placeholders "$dir/.env.template" > "$dir/.env") && ok "$SLACK_DIR_REL/.env created (private)"
+        (umask 077 && render_placeholders "$dir/.env.example" > "$dir/.env") && ok "$SLACK_DIR_REL/.env created (private)"
     fi
     for unit in "$dir"/agent-bot*.service "$dir"/agent-bot*.timer; do
         install_unit "$unit"
@@ -569,14 +570,14 @@ setup_slack() {
     fi
 }
 
-# .env — the single config file (see .env.template). Created once and never overwritten; owner-only
+# .env — the single config file (see .env.example). Created once and never overwritten; owner-only
 # because it holds the local tokens.
 setup_env_file() {
     local env_file="$REPO_ROOT/.env"
     if [ -f "$env_file" ]; then
         ok ".env already exists — no changes"
     else
-        render_placeholders "$REPO_ROOT/.env.template" > "$env_file" && ok ".env created from .env.template"
+        render_placeholders "$REPO_ROOT/.env.example" > "$env_file" && ok ".env created from .env.example"
     fi
     chmod 600 "$env_file"
 }
@@ -647,16 +648,79 @@ setup_local_qdrant() {
         warn "Docker not available — local brain skipped"
         return
     fi
+    brain_ports
+    case "$QDRANT_PORT$MEMSVC_PORT" in
+        *[!0-9]*)
+            warn "QDRANT_PORT and MEMORY_SERVICE_PORT in .env must be numbers — local brain skipped"
+            return
+            ;;
+    esac
+    local owner compose_env here="$REPO_ROOT/local/scripts/memory_index"
+    owner="$(qdrant_owner "$QDRANT_CONTAINER" "$QDRANT_PORT")"
+    if [ -n "$owner" ] && [ "$owner" != "$here" ]; then
+        # another checkout's Qdrant already has this name or this port: adopting it would put two
+        # kits' memories in one set of collections
+        warn "The Qdrant on :$QDRANT_PORT belongs to another checkout ($owner) — local brain skipped"
+        warn "  give this kit its own ports in .env (QDRANT_PORT, MEMORY_SERVICE_PORT, MEMORY_SERVICE_URL) and run again"
+        return
+    fi
     LOCAL_BRAIN=1
-    if container_running memory-qdrant; then
-        ok "Local Qdrant already running (memory-qdrant:7633)"
+    if container_running "$QDRANT_CONTAINER"; then
+        ok "Local Qdrant already running ($QDRANT_CONTAINER:$QDRANT_PORT)"
     else
+        # an env file, not the environment: with DOCKER_SUDO the variables would not reach compose
+        compose_env="$(mktemp)"
+        printf 'QDRANT_PORT=%s\nQDRANT_GRPC_PORT=%s\nQDRANT_CONTAINER=%s\n' \
+            "$QDRANT_PORT" "$((QDRANT_PORT + 1))" "$QDRANT_CONTAINER" > "$compose_env"
         CMP="$(docker_compose_cmd)" \
-            && $CMP -f "$REPO_ROOT/local/scripts/memory_index/docker-compose.yml" up -d \
-            && ok "Local Qdrant up (memory-qdrant:7633)" \
+            && $CMP --env-file "$compose_env" -p "$QDRANT_PROJECT" \
+                -f "$REPO_ROOT/local/scripts/memory_index/docker-compose.yml" up -d \
+            && ok "Local Qdrant up ($QDRANT_CONTAINER:$QDRANT_PORT)" \
             || warn "Could not start Qdrant"
+        rm -f "$compose_env"
     fi
     install_tool_deps "local/scripts/memory_index/requirements.txt"
+}
+
+# brain_ports → QDRANT_PORT and MEMSVC_PORT from the root .env (7733 and 7800 when unset: the
+# kit's own ports, the same on every machine), and the names of this checkout's Qdrant, which
+# carry its port so two kits on one machine never share a container or a volume. An install
+# still on 7633, the port of the first versions, keeps the names it was created with.
+brain_ports() {
+    QDRANT_PORT="$(env_value QDRANT_PORT)"
+    QDRANT_PORT="${QDRANT_PORT:-7733}"
+    MEMSVC_PORT="$(env_value MEMORY_SERVICE_PORT)"
+    MEMSVC_PORT="${MEMSVC_PORT:-7800}"
+    QDRANT_CONTAINER="memory-qdrant-$QDRANT_PORT"
+    QDRANT_PROJECT="memory_index_$QDRANT_PORT"
+    if [ "$QDRANT_PORT" = "7633" ]; then
+        QDRANT_CONTAINER="memory-qdrant"
+        QDRANT_PROJECT="memory_index"
+    fi
+}
+
+# qdrant_owner NAME PORT → the checkout whose compose created the container called NAME, or the
+# one publishing PORT on this host (its compose working directory). Nothing when there is no such
+# container, or compose did not create it.
+qdrant_owner() {
+    local label="com.docker.compose.project.working_dir" dir
+    dir="$($DOCKER_SUDO docker inspect -f "{{ index .Config.Labels \"$label\" }}" "$1" 2>/dev/null)"
+    [ -n "$dir" ] || dir="$($DOCKER_SUDO docker ps --filter "publish=$2" \
+        --format "{{.Label \"$label\"}}" 2>/dev/null | head -1)"
+    echo "$dir"
+}
+
+# free_own_port PORT → stops whatever holds PORT when it runs from this checkout (a copy of the
+# service started by hand). Anything else is left alone: another kit may be listening there, and
+# the unit's own failure to start is what the verification then reports.
+free_own_port() {
+    local pid
+    for pid in $(fuser "$1/tcp" 2>/dev/null); do
+        if [[ "$(readlink "/proc/$pid/cwd" 2>/dev/null)/" == "$REPO_ROOT"/* ]] \
+            || tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -qF "$REPO_ROOT/"; then
+            kill "$pid" 2>/dev/null || true
+        fi
+    done
 }
 
 # Local memory_service (systemd, writer for personal memory). Requires LOCAL_BRAIN set by
@@ -685,23 +749,29 @@ set_key('$REPO_ROOT/.env', 'MEMORY_USER_TOKENS', f'{tok}:{getpass.getuser()}', q
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory.service"
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory-consolidate.service"
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory-consolidate.timer"
+        install_unit "$REPO_ROOT/local/scripts/memory_index/agent-brain-evidence.service"
+        install_unit "$REPO_ROOT/local/scripts/memory_index/agent-brain-evidence.timer"
         sudo systemctl daemon-reload
         sudo systemctl enable --now agent-memory-consolidate.timer 2>/dev/null \
             && ok "nightly memory consolidation scheduled (03:30, agent-memory-consolidate.timer)" \
             || warn "could not schedule the nightly memory consolidation"
+        sudo systemctl enable --now agent-brain-evidence.timer 2>/dev/null \
+            && ok "weekly brain evidence scheduled (Sun 04:00, agent-brain-evidence.timer)" \
+            || warn "could not schedule the weekly brain evidence"
         if unit_active agent-memory.service; then
             # a re-install brings new code: the running service has to load it
             sudo systemctl restart agent-memory.service 2>/dev/null || true
             ok "local memory_service restarted on the current code (systemd)"
         else
-            fuser -k 7700/tcp 2>/dev/null || true   # free the port if a stray process held it
+            brain_ports
+            free_own_port "$MEMSVC_PORT"   # a copy of this service started by hand would hold it
             sudo systemctl enable --now agent-memory.service 2>/dev/null || true
             if ! unit_active agent-memory.service; then
                 sleep 2
                 sudo systemctl restart agent-memory.service 2>/dev/null || true
                 sleep 3
             fi
-            unit_active agent-memory.service && ok "local memory_service configured and running (:7700)" \
+            unit_active agent-memory.service && ok "local memory_service configured and running (:$MEMSVC_PORT)" \
                 || info "starting up — verification will confirm and repair"
         fi
         LOCAL_MEMSVC=1
@@ -877,6 +947,14 @@ env_is_true() {
     KEY="$1" "$REPO_ROOT/.venv/bin/python3" -c "import os,sys; from dotenv import dotenv_values; sys.exit(0 if (dotenv_values(os.path.join('$REPO_ROOT','.env')).get(os.environ['KEY']) or '').lower() in ('1','true','yes') else 1)" 2>/dev/null
 }
 
+# env_value KEY → prints the value of KEY in the root .env, the way memory_service reads it; nothing
+# when it is not there. For ports and names only: has_env answers for a secret without printing it.
+env_value() {
+    [ -f "$REPO_ROOT/.env" ] || return 0
+    [ -x "$REPO_ROOT/.venv/bin/python3" ] || return 0
+    KEY="$1" "$REPO_ROOT/.venv/bin/python3" -c "import os; from dotenv import dotenv_values; print(dotenv_values(os.path.join('$REPO_ROOT','.env')).get(os.environ['KEY']) or '')" 2>/dev/null
+}
+
 # require_env VAR... → 0 if ALL are present in .env; if any is missing, warns and returns 1 (to skip the step).
 require_env() {
     local rc=0 v
@@ -913,15 +991,67 @@ docker_compose_cmd() {
     else return 1; fi
 }
 
-# wait_memory_service → 0 once :7700 reports healthy. The first start downloads the embedding
-# model, which can take a few minutes.
+# memory_service_answers → 0 when the service on this kit's port (brain_ports) is healthy and
+# accepts this kit's token. The port alone proves nothing: on a machine with two kits it may be
+# the other one's service. The token is read and sent inside python, never printed or in argv.
+memory_service_answers() {
+    PORT="$MEMSVC_PORT" "$REPO_ROOT/.venv/bin/python3" -c "
+import json, os, sys, urllib.request
+from dotenv import dotenv_values
+base = 'http://localhost:' + os.environ['PORT'] + '/memory/'
+token = dotenv_values('$REPO_ROOT/.env').get('MEMORY_SERVICE_TOKEN') or ''
+with urllib.request.urlopen(base + 'health', timeout=5) as health:
+    if json.load(health).get('status') != 'ok':
+        sys.exit(1)
+whoami = urllib.request.Request(base + 'whoami', headers={'X-Memory-Token': token})
+urllib.request.urlopen(whoami, timeout=5).close()
+" 2>/dev/null
+}
+
+# seed_brain_evidence → fills the brain page's Health panel on a fresh install, so it opens with
+# nothing "missing": the first night cycle when none ran yet (it takes seconds), and the backup,
+# memory benchmark and coverage report through agent-brain-evidence.service, started without
+# waiting (the test suite takes minutes) and logged to the journal. Call it once the
+# memory_service answers.
+seed_brain_evidence() {
+    if [ ! -f "$REPO_ROOT/local/scripts/a2a/logs/consolidation.json" ]; then
+        sudo systemctl start agent-memory-consolidate.service 2>/dev/null \
+            && ok "first memory consolidation done (the night cycle has evidence)" \
+            || warn "could not run the first memory consolidation — it runs tonight at 03:30"
+    fi
+    if sudo systemctl start --no-block agent-brain-evidence.service 2>/dev/null; then
+        ok "brain evidence running in the background (backup, memory benchmark, coverage)"
+        info "  follow it with: journalctl -u agent-brain-evidence -f"
+    else
+        warn "could not start the brain evidence — run it by hand: bash bin/brain-evidence.sh"
+    fi
+}
+
+# wait_memory_service → 0 once this kit's service answers on its port (MEMORY_SERVICE_PORT in
+# .env, 7800 by default).
 wait_memory_service() {
     local _
+    brain_ports
     for _ in $(seq 1 "$MEMORY_SERVICE_WAIT_TRIES"); do
-        curl -s -m5 "http://localhost:7700/memory/health" 2>/dev/null | grep -q '"status":"ok"' && return 0
+        memory_service_answers && return 0
         sleep 5
     done
     return 1
+}
+
+# warm_memory_model → 0 once the service has its embedding model. The service fetches it on the
+# first save or search of a fresh install (a few hundred MB), longer than a client waits, so that
+# first one would fail: one search made here, with time to download, is what makes it work.
+warm_memory_model() {
+    brain_ports
+    PORT="$MEMSVC_PORT" WAIT="$MEMORY_MODEL_WAIT_SECONDS" "$REPO_ROOT/.venv/bin/python3" -c "
+import os, urllib.request
+from dotenv import dotenv_values
+token = dotenv_values('$REPO_ROOT/.env').get('MEMORY_SERVICE_TOKEN') or ''
+url = 'http://localhost:' + os.environ['PORT'] + '/memory/search?q=warm-up&k=1'
+search = urllib.request.Request(url, headers={'X-Memory-Token': token})
+urllib.request.urlopen(search, timeout=int(os.environ['WAIT'])).close()
+" 2>/dev/null
 }
 
 # wait_http URL TRIES → 0 as soon as anything answers on URL (any HTTP status), one try a second.

@@ -22,10 +22,11 @@ def backups(tmp_path, monkeypatch):
     return tmp_path / "backups"
 
 
-def _fake_qdrant(monkeypatch, fail_create_coll="", fail_download=False):
+def _fake_qdrant(monkeypatch, fail_create_coll="", fail_download=False, missing_coll=""):
     """A Qdrant stub: unique snapshot bodies per call, recorded creates/downloads/deletes."""
     counter = itertools.count(1)
     created, deleted, downloaded = [], [], []
+    monkeypatch.setattr(bb, "_exists", lambda coll: coll != missing_coll)
 
     def create(coll):
         created.append(coll)
@@ -72,6 +73,21 @@ def test_backup_reports_and_survives_a_failing_collection(backups, monkeypatch, 
     assert bb.take() == 1
     assert "c2: snapshot creation failed" in capsys.readouterr().err
     assert (backups / "c1").exists() and not (backups / "c2").exists()
+
+
+def test_backup_skips_a_collection_that_was_never_created(backups, monkeypatch, capsys):
+    """A fresh kit has no docs collection until its docs are indexed: not a failed backup."""
+    _fake_qdrant(monkeypatch, fail_create_coll="c2", missing_coll="c2")
+    assert bb.take() == 0
+    shown = capsys.readouterr()
+    assert "– c2: not created yet" in shown.out and "failed" not in shown.err
+    assert (backups / "c1").exists() and not (backups / "c2").exists()
+
+
+def test_only_a_404_means_the_collection_is_not_there(monkeypatch):
+    for status, there in ((404, False), (200, True), (500, True)):
+        monkeypatch.setattr(bb, "_request", lambda *_a, status=status, **_k: (status, b""))
+        assert bb._exists("c1") is there
 
 
 def test_backup_survives_an_empty_download(backups, monkeypatch, capsys):

@@ -1,12 +1,12 @@
 """Guard: every env var read by first-party code must be documented.
 
 Scans the repo's Python sources for os.getenv / os.environ and requires
-every variable to appear in one of the committed .env.template files (or in the
+every variable to appear in one of the committed .env.example files (or in the
 allowlist of system/runtime variables that don't belong in a template).
 Prevents recurring drift: new config lands in code or a crontab but
 never in the template (bit us twice: the 2026-06-30 audit fixed 9 vars,
 the 2026-07-03 one found 4 more). Scope: Python; crontab's inline vars
-are documented by hand in .env.template (see the snapshot/restore section)."""
+are documented by hand in .env.example (see the snapshot/restore section)."""
 
 import re
 from pathlib import Path
@@ -27,9 +27,9 @@ SCAN_DIRS = [
 ]
 
 TEMPLATES = [
-    ".env.template",
-    "local/scripts/notify/.env.template",
-    "local/monitoring/.env.template",
+    ".env.example",
+    "local/scripts/notify/.env.example",
+    "local/monitoring/.env.example",
 ]
 
 # Generated/vendored directories — never first-party.
@@ -115,10 +115,10 @@ def scanned_usages() -> dict:
 
 
 def test_templates_exist():
-    root_template = REPO_ROOT / ".env.template"
+    root_template = REPO_ROOT / ".env.example"
     assert (
         root_template.exists()
-    ), ".env.template at the root is missing — it's the committed config doc"
+    ), ".env.example at the root is missing — it's the committed config doc"
 
 
 def test_all_env_vars_documented_in_templates():
@@ -127,7 +127,7 @@ def test_all_env_vars_documented_in_templates():
     missing = {var: sorted(files) for var, files in sorted(hits.items()) if var not in documented}
     detail = "\n".join(f"  {var}  ←  {', '.join(files)}" for var, files in missing.items())
     assert not missing, (
-        "Env vars read by the code but missing from every .env.template "
+        "Env vars read by the code but missing from every .env.example "
         "(document it in the right template, or if the "
         f"system/CI/harness injects it, add it to ALLOWLIST):\n{detail}"
     )
@@ -136,12 +136,12 @@ def test_all_env_vars_documented_in_templates():
 @pytest.mark.parametrize(
     "template",
     [
-        ".env.template",
-        "local/monitoring/.env.template",
-        "local/scripts/memory_index/.env.template",
-        "local/scripts/excel_report_generator/.env.template",
-        "local/scripts/notify/.env.template",
-        "local/scripts/pdf_report_generator/.env.template",
+        ".env.example",
+        "local/monitoring/.env.example",
+        "local/scripts/memory_index/.env.example",
+        "local/scripts/excel_report_generator/.env.example",
+        "local/scripts/notify/.env.example",
+        "local/scripts/pdf_report_generator/.env.example",
     ],
 )
 def test_a_comment_never_becomes_a_value(template):

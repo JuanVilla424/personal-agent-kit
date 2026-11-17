@@ -116,3 +116,6 @@ local/scripts/memory_index/.metrics-state/
 
 # Reports PDF
 docs/*.pdf
+
+# Personal developments built by the agent for this user — never published
+local/developments/

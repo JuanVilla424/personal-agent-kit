@@ -1,0 +1,1796 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="apple-touch-icon" href="favicon.svg"></head><body>
+<title>Agent brain</title>
+<style>
+/* Agent brain — an anatomical atlas plate read through a lab instrument.
+   Light = an H&E slide on lavender paper; dark = fluorescence in a darkfield. The viewer is
+   ALWAYS darkfield (deep plum in light): the additive brain colors are tuned for a dark ground.
+   Depth = hairline rgba rules + whisper-quiet surface shifts, never drop shadows. Base unit 4 px.
+   Signature: every panel is a numbered atlas figure (.cap + .fig), statuses are stain dots,
+   icons are one fine-ink SVG set (#i-*), and the viewer carries a live scale bar. */
+:root {
+  /* paper, slide and the inset where things are typed */
+  --bg: #f4eff3; --panel: #fbf8fa; --tissue: #eadbe4; --inset: #f1eaf0;
+  /* hematoxylin ink in four steps */
+  --ink: #231a2c; --ink-2: #4a3e55; --muted: #6a5c74; --ink-4: #75667f;
+  /* hairline rules */
+  --line: rgba(35, 26, 44, .14); --line-soft: rgba(35, 26, 44, .08); --line-strong: rgba(35, 26, 44, .28);
+  /* stain: the single action accent */
+  --stain: #5b3fd0; --stain-ink: #ffffff; --stain-soft: rgba(91, 63, 208, .1); --focus: #7a5cf0;
+  /* darkfield viewer */
+  --stage: #2e2836; --stage-2: #362f40; --stage-ink: #efeaf6; --stage-muted: #a89fb8;
+  --stage-line: rgba(239, 234, 246, .12); --stage-line-strong: rgba(239, 234, 246, .26);
+  --ok: #2f7a43; --warn: #a86a00; --bad: #b3261e;
+  /* identity color per region (fluorescence channels) */
+  --r-dlpfc: #8b6dff; --r-apfc: #ff6fc8; --r-ofc: #ff8a3d; --r-atl: #3fd2ff; --r-post: #5fd97a;
+  --r-hip: #ff3d5a; --r-tha: #e6eeff; --r-amy: #4a6dff; --r-bg: #c6e84a; --r-cb: #ffd23f; --r-vta: #c9a27a; --r-hypo: #ff5f9e;
+  --radius-s: 3px; --radius-m: 6px; --radius-l: 10px;
+  --f-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0c16; --panel: #10131f; --tissue: #1a2033; --inset: #0c0f1a;
+    --ink: #e7e4f2; --ink-2: #c4c0d8; --muted: #9a97b3; --ink-4: #9a96af;
+    --line: rgba(231, 228, 242, .1); --line-soft: rgba(231, 228, 242, .06); --line-strong: rgba(231, 228, 242, .22);
+    --stain: #a58bff; --stain-ink: #0a0c16; --stain-soft: rgba(165, 139, 255, .14); --focus: #b9a4ff;
+    --stage: #06070f; --stage-2: #0d0f1c; --stage-ink: #e9e6f5; --stage-muted: #8d8aa8;
+    --stage-line: rgba(233, 230, 245, .09); --stage-line-strong: rgba(233, 230, 245, .2);
+    --ok: #6fdc8c; --warn: #ffc65c; --bad: #ff7a70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0c16; --panel: #10131f; --tissue: #1a2033; --inset: #0c0f1a;
+  --ink: #e7e4f2; --ink-2: #c4c0d8; --muted: #9a97b3; --ink-4: #9a96af;
+  --line: rgba(231, 228, 242, .1); --line-soft: rgba(231, 228, 242, .06); --line-strong: rgba(231, 228, 242, .22);
+  --stain: #a58bff; --stain-ink: #0a0c16; --stain-soft: rgba(165, 139, 255, .14); --focus: #b9a4ff;
+  --stage: #06070f; --stage-2: #0d0f1c; --stage-ink: #e9e6f5; --stage-muted: #8d8aa8;
+  --stage-line: rgba(233, 230, 245, .09); --stage-line-strong: rgba(233, 230, 245, .2);
+  --ok: #6fdc8c; --warn: #ffc65c; --bad: #ff7a70;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1440px; margin: 0 auto; padding-inline: clamp(16px, 3vw, 40px); padding-block: 32px 40px; display: grid; gap: 24px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+code { font-family: var(--f-mono); font-size: .88em; }
+:where(button, input, textarea, a, [tabindex]):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* fine-ink icon set: one stroke weight, round terminals (sprite #i-*) */
+.ic { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ic.sm { width: 14px; height: 14px; }
+
+/* stain dots: status, colored by meaning, glowing in the darkfield */
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+.dot.live { background: var(--ok); animation: beat 1.6s infinite; }
+@keyframes beat { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
+
+/* ── plate header: identity on the left, one control console on the right ── */
+header { display: grid; gap: 16px; }
+.plate-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; align-items: start; }
+.plate-id { display: grid; gap: 8px; min-width: 0; }
+header h1 { font-size: clamp(2.3rem, 5vw, 3.8rem); line-height: 1; font-style: italic; letter-spacing: -.015em; }
+header h1 .sub { font-style: normal; color: var(--muted); font-size: clamp(1rem, 1.6vw, 1.2rem); letter-spacing: 0; display: block; margin-top: 10px; font-family: var(--f-body); line-height: 1.4; }
+.console { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-top: 2px; }
+.rec { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--panel); font: 500 11px/1 var(--f-mono); letter-spacing: .04em; color: var(--muted); white-space: nowrap; max-width: 100%; overflow: hidden; }
+.rec > i { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; }
+.rec.on > i { background: var(--ok); animation: beat 1.6s infinite; }
+.rec b { color: var(--ink); font-weight: 500; letter-spacing: .12em; }
+.rec small { font-size: inherit; overflow: hidden; text-overflow: ellipsis; }
+.lang { display: inline-flex; height: 32px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--panel); overflow: hidden; }
+.lang button { display: grid; place-items: center; min-width: 38px; padding: 0 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+.lang button + button { border-left: 1px solid var(--line); }
+.lang button:hover { color: var(--ink); }
+.lang button[aria-pressed="true"] { background: var(--stain-soft); color: var(--ink); }
+.lang button:focus-visible { outline-offset: -2px; }
+.lang .flag { display: block; width: 21px; height: 14px; border-radius: 2px; box-shadow: 0 0 0 1px var(--line-strong); opacity: .45; transition: opacity .15s; }
+.lang button[data-lang][aria-pressed="true"] .flag, .lang button[data-lang]:hover .flag { opacity: 1; }
+
+/* instrument strip: one line of readouts instead of a cloud of pills */
+.strip { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--panel); overflow-x: auto; scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+.readout { display: grid; gap: 3px; padding: 9px 16px; border-left: 1px solid var(--line-soft); white-space: nowrap; flex: 1 0 auto; }
+.readout:first-child { border-left: 0; }
+.readout .k { font: 500 10px/1.2 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-4); }
+.readout b { display: inline-flex; align-items: center; gap: 7px; font: 500 13px/1.3 var(--f-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* ── figure captions (the signature) ── */
+.cap { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px; border-bottom: 1px solid var(--line); font: 500 11px/1.3 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.fig { color: var(--ink); letter-spacing: .06em; white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; }
+.fig::after { content: ""; width: 16px; height: 1px; background: var(--line-strong); }
+.cap .meta { margin-left: auto; color: var(--ink-4); letter-spacing: .08em; text-align: right; }
+
+/* ── stage: darkfield viewer + side column ── */
+.stage { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 980px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.viewer { position: relative; background: var(--stage); color: var(--stage-ink); border-radius: var(--radius-m); overflow: hidden; border: 1px solid var(--stage-line-strong); }
+.viewer-head { position: absolute; inset: 0 0 auto 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; pointer-events: none; z-index: 3; font: 500 11px/1.3 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--stage-muted); }
+.viewer-head .fig { color: var(--stage-ink); }
+.viewer-head .fig::after { background: var(--stage-line-strong); }
+.viewer-head .cap-l { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+#vhLeft { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer-head .cap-r { display: inline-flex; align-items: center; gap: 14px; }
+.scalebar { display: inline-grid; justify-items: center; gap: 3px; white-space: nowrap; font: 500 10px/1 var(--f-mono); letter-spacing: .08em; color: var(--stage-ink); }
+.scalebar i { display: block; width: 40px; height: 5px; border: 1px solid currentColor; border-top: 0; transition: width .25s ease-out; }
+#gl { position: relative; width: 100%; aspect-ratio: 16 / 11; max-width: 100%; cursor: grab; touch-action: none; }
+#gl:active { cursor: grabbing; }
+#gl canvas { display: block; width: 100% !important; height: 100% !important; }
+#labels { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.lbl { position: absolute; transform: translate(-50%, -50%); font-family: var(--f-mono); font-size: 10.5px; font-weight: 500; letter-spacing: .04em; color: var(--stage-ink); background: color-mix(in srgb, var(--stage) 72%, transparent); border: 1px solid var(--stage-line-strong); border-radius: var(--radius-s); padding: 1px 6px; white-space: nowrap; display: flex; gap: 5px; align-items: center; transition: opacity .2s; backdrop-filter: blur(2px); }
+.lbl i { width: 6px; height: 6px; border-radius: 50%; display: block; box-shadow: 0 0 6px currentColor; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 10px 14px; border-top: 1px solid var(--stage-line); background: var(--stage-2); }
+.range { display: inline-flex; align-items: center; gap: 10px; font: 500 10px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--stage-muted); }
+.range input[type="range"] { width: 120px; accent-color: var(--r-dlpfc); }
+.tgroup { display: inline-flex; border: 1px solid var(--stage-line-strong); border-radius: var(--radius-m); overflow: hidden; }
+.tbtn { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; background: transparent; color: var(--stage-muted); border: 0; font: 500 11px/1 var(--f-mono); letter-spacing: .04em; cursor: pointer; transition: background .15s, color .15s; }
+.tgroup .tbtn + .tbtn { border-left: 1px solid var(--stage-line); }
+.tbtn:hover { color: var(--stage-ink); }
+.tbtn[aria-pressed="true"] { color: var(--stage-ink); background: rgba(239, 234, 246, .08); }
+.tbtn:focus-visible { outline-offset: -2px; }
+.tbtn.solo { border: 1px solid var(--stage-line-strong); border-radius: var(--radius-m); }
+.toolbar .hint { margin-left: auto; font: 500 10px/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--stage-muted); }
+.census { padding: 12px 14px; border-top: 1px solid var(--stage-line); display: grid; gap: 9px; font-family: var(--f-mono); font-size: 11px; color: var(--stage-muted); }
+.census-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; text-transform: uppercase; letter-spacing: .12em; font-weight: 500; font-size: 10.5px; }
+.census-head span:last-child { color: var(--stage-ink); }
+.census-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; gap: 2px; }
+.census-bar i { display: block; height: 100%; min-width: 2px; border-radius: 1px; }
+.census-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-variant-numeric: tabular-nums; }
+.census-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.census-legend i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.seg-cortex { background: var(--r-dlpfc); } .seg-cb { background: var(--r-cb); } .seg-rest { background: var(--r-vta); }
+.vitals { position: absolute; left: 14px; right: 14px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; color: var(--stage-muted); pointer-events: none; z-index: 5; }
+.vitals > span { white-space: nowrap; }
+.vitals .vit-b { display: inline-flex; align-items: center; gap: 6px; }
+.vitals i { width: 8px; height: 8px; border-radius: 50%; background: var(--r-hypo); display: inline-block; box-shadow: 0 0 8px var(--r-hypo); }
+.vitals .vit-d.on { color: var(--stage-ink); }
+.of-spark { width: 100%; height: 46px; display: block; margin: 4px 0 0; color: var(--stage-muted); }
+.of-st.crit { color: #5ec46a; } .of-st.sub { color: #c4a85e; } .of-st.sup { color: #e06666; }
+.of-st.random, .of-st.insufficient, .of-st.nodata { color: var(--muted); }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1px; background: var(--stage-line); border-top: 1px solid var(--stage-line); }
+.legend button { display: flex; align-items: center; gap: 9px; background: var(--stage); color: var(--stage-ink); border: 0; padding: 9px 14px; font-family: var(--f-body); font-size: 12.5px; text-align: left; cursor: pointer; min-width: 0; transition: background .15s; }
+.legend button:hover { background: var(--stage-2); }
+.legend button small { font-family: var(--f-mono); color: var(--stage-muted); font-size: 10px; letter-spacing: .06em; margin-left: auto; }
+.legend button[aria-pressed="true"] { background: color-mix(in srgb, var(--stage-ink) 10%, var(--stage)); }
+.legend button:focus-visible { outline-offset: -2px; }
+.sw { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.viewer .sw, .legend .sw { box-shadow: 0 0 7px currentColor; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--stage-muted); z-index: 1; }
+
+/* ── slides (panels) ── */
+.plate { position: relative; border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius-m); overflow: hidden; }
+.plate-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 40px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.side { display: grid; gap: 16px; min-width: 0; }
+.inspector { padding: 16px; display: grid; gap: 10px; }
+.inspector h2 { font-size: 1.7rem; font-style: italic; line-height: 1.1; }
+.inspector .proc { display: flex; align-items: center; gap: 8px; }
+.kv { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 7px 12px; font-size: 13.5px; }
+.kv dt { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); padding-top: 2px; }
+.kv dd { margin: 0; min-width: 0; }
+.state { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 11px; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); }
+.state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.state[data-status="unknown"], .state[data-status="missing"] { color: var(--muted); background: var(--inset); }
+.state[data-status="stale"], .state[data-status="warn"] { color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.state[data-status="error"], .state[data-status="down"], .state[data-status="invalid"] { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.neuro { font-family: var(--f-display); font-size: 1.04rem; line-height: 1.5; border-left: 2px solid var(--line-strong); padding-left: 12px; margin: 0; color: var(--ink-2); }
+.ctrl { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.btn { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: var(--radius-s); border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 12.5px/1 var(--f-body); cursor: pointer; transition: background .15s, border-color .15s; }
+.btn:hover { border-color: var(--line-strong); background: var(--stain-soft); }
+.btn.primary { background: var(--stain); border-color: var(--stain); color: var(--stain-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.log { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; font-size: 12.5px; }
+.log li { display: grid; grid-template-columns: 56px 9px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 14px; border-bottom: 1px solid var(--line-soft); }
+.log li:first-child { animation: flash 1.1s ease-out; }
+@keyframes flash { from { background: var(--stain-soft); } to { background: transparent; } }
+.log time { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.log .sw { align-self: center; width: 7px; height: 7px; }
+.log .tx { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); }
+.log em { font-style: normal; font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-4); margin-left: 4px; }
+.log em.org { margin: 0 6px 0 0; }
+.log .rep { font: 500 10.5px/1.6 var(--f-mono); color: var(--muted); background: var(--stain-soft); border-radius: 999px; padding: 0 7px; align-self: center; }
+/* salience (Fig. II): what deserves attention stands out, the agent's own echoes recede, the heartbeat is one live row */
+.log li.hot { border-left: 2px solid var(--stain); padding-left: 12px; }
+.log li.hot .tx { color: var(--ink); }
+.log li.dim { opacity: .55; }
+.log li.beat .tx { color: var(--ink-4); font-style: italic; }
+.seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line); border-radius: var(--radius-s); overflow: hidden; }
+.seg button { font: 500 10px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; padding: 5px 8px; border: 0; background: transparent; color: var(--ink-4); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line-soft); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { color: var(--ink); background: var(--stain-soft); }
+
+/* ── editorial sections below the stage ── */
+.cycle { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--panel); overflow: hidden; }
+.cycle > div { padding: 18px; border-right: 1px solid var(--line-soft); display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cycle > div:last-child { border-right: 0; }
+.cycle .n { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.cycle h3 { font-size: 1.3rem; font-style: italic; }
+.cycle p { margin: 0; font-size: 13.5px; color: var(--muted); }
+@media (max-width: 760px) { .cycle { grid-template-columns: minmax(0, 1fr); } .cycle > div { border-right: 0; border-bottom: 1px solid var(--line-soft); } .cycle > div:last-child { border-bottom: 0; } }
+.section-head { display: grid; gap: 8px; max-width: 72ch; }
+.section-head .eyebrow { display: inline-flex; align-items: center; gap: 10px; }
+.section-head h2 { font-size: clamp(1.7rem, 3vw, 2.3rem); font-style: italic; }
+.section-head p { margin: 0; color: var(--muted); }
+.health { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .health { grid-template-columns: minmax(0, 1fr); } }
+.checks { list-style: none; margin: 0; padding: 0; }
+.checks li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; }
+.checks li:last-child { border-bottom: 0; }
+.tag { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; align-self: start; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, currentColor 12%, transparent); }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.bad { color: var(--bad); }
+.cov { padding: 16px; display: grid; gap: 10px; }
+.bar { position: relative; height: 10px; background: var(--tissue); border-radius: 5px; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--warn); border-radius: 5px; }
+.bar .thr { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+.axis { position: relative; height: 16px; font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-4); }
+.axis span { position: absolute; transform: translateX(-50%); }
+.wm { list-style: none; margin: 0; padding: 0; }
+.wm li { padding: 10px 16px; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; display: grid; gap: 2px; }
+.wm li:last-child { border-bottom: 0; }
+.wm .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-4); text-transform: uppercase; letter-spacing: .1em; }
+.sources { font-size: 13.5px; color: var(--muted); display: grid; gap: 10px; }
+.sources ol { margin: 0; padding-left: 22px; display: grid; gap: 5px; columns: 2; column-gap: 32px; }
+.sources ol li::marker { font-family: var(--f-mono); font-size: 11px; color: var(--ink-4); }
+@media (max-width: 860px) { .sources ol { columns: 1; } }
+.sources a { color: var(--ink-2); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+.sources a:hover { color: var(--ink); text-decoration-color: currentColor; }
+footer { font-family: var(--f-display); font-style: italic; font-size: 1.2rem; max-width: 60ch; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* ── narrow screens ── */
+@media (max-width: 720px) {
+  .plate-top { grid-template-columns: minmax(0, 1fr); }
+  .console { justify-content: flex-start; }
+  .rec small { display: none; }
+  .toolbar .hint { display: none; }
+  .strip { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+  .lbl { font-size: 9.5px; padding: 0 5px; }
+  .vitals { font-size: 9px; gap: 10px; }
+  .kv { grid-template-columns: 88px minmax(0, 1fr); }
+  .sc-report { margin-left: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .dot.live, .rec.on > i, .sc-st.running, .log li:first-child { animation: none; } }
+
+/* Three workspaces, one anatomical instrument. Detail is available, not stacked by default. */
+button, a, summary { touch-action: manipulation; }
+.skip-link { position: fixed; top: 8px; left: -10000px; padding: 12px 16px; background: var(--panel); color: var(--ink); z-index: 100; }
+.skip-link:focus { left: 8px; }
+.brain-nav { display: flex; gap: 24px; border-bottom: 1px solid var(--line-strong); }
+.brain-nav button { position: relative; display: inline-flex; align-items: center; gap: 12px; padding: 16px 4px; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; background: transparent; color: var(--muted); font: 500 16px/1.4 var(--f-body); cursor: pointer; text-align: left; }
+.brain-nav button:hover { color: var(--ink); }
+.brain-nav button[aria-selected="true"] { border-bottom-color: var(--stain); color: var(--ink); }
+.tab-index { color: var(--ink-4); font: 12px var(--f-mono); }
+.view { min-width: 0; display: grid; gap: 24px; }
+:where(#live, #operations, #cycle, #regions, #health, #sources) { scroll-margin-top: 24px; }
+.state-console { display: flex; gap: 12px 20px; align-items: center; flex-wrap: wrap; padding-top: 4px; }
+.state-readout { font: 12px/1.5 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.state-readout[data-status="error"] { color: var(--bad); }
+.state-readout[data-status="stale"] { color: var(--warn); }
+.health-quick { margin-left: auto; color: var(--ink-2); font: 12px/1.5 var(--f-mono); text-underline-offset: 4px; }
+.section-block { display: grid; gap: 16px; min-width: 0; }
+.stage { grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr); gap: 24px; }
+.viewer-column { display: grid; gap: 20px; min-width: 0; }
+.viewer #gl { aspect-ratio: 16 / 10; }
+.side { gap: 20px; }
+.pulse-panel { order: 1; }
+.region-inspector { order: 2; }
+.inspector { padding: 24px; gap: 16px; }
+.inspector h2 { font-size: 2rem; }
+.region-implementation { margin: 0; font-size: 16px; color: var(--ink-2); overflow-wrap: anywhere; }
+.region-note { font-size: 16px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 16px; }
+.region-note summary { cursor: pointer; font: 500 13px/1.5 var(--f-body); color: var(--muted); }
+.region-note p { margin: 12px 0; }
+.kv { grid-template-columns: 96px minmax(0, 1fr); margin: 0; gap: 12px; font-size: 14px; }
+.kv dt { font-size: 12px; letter-spacing: .02em; text-transform: none; }
+.kv dd { overflow-wrap: anywhere; }
+.state { font-size: 12px; line-height: 1.6; justify-self: start; padding: 3px 10px; max-width: 100%; overflow-wrap: anywhere; }
+.legend { border: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--line-soft); }
+.legend button { background: var(--panel); color: var(--ink-2); padding: 12px; font-size: 13px; line-height: 1.4; min-height: 56px; }
+.legend button:hover, .legend button[aria-pressed="true"] { background: var(--stain-soft); color: var(--ink); }
+.legend button[aria-pressed="true"] { border-bottom: 2px solid var(--stain); padding-bottom: 10px; }
+.legend button small { color: var(--muted); font-size: 12px; }
+.region-label { display: grid; gap: 2px; min-width: 0; }
+.region-label b { font: 500 12px var(--f-mono); }
+.region-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legend .sw { width: 7px; height: 7px; box-shadow: none; }
+.operations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.operations .sc-list { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
+.sc-tx, .sc-compose textarea, .sc-edit textarea, .rp { font-size: 16px; line-height: 1.55; }
+.sc-tx { -webkit-line-clamp: 3; }
+.sc-compose { padding: 20px; }
+.sc-compose textarea { min-height: 80px; padding: 12px; }
+.sc-item { padding: 16px 20px; }
+.sc-send { width: 44px; height: 44px; }
+.sc-hint, .sc-msg { font-size: 13px; padding: 16px 20px; color: var(--muted); }
+.sc-meta, .sc-count, .sc-edit .row .hint, .rp .judge { font-size: 12px; color: var(--muted); }
+.sc-acts { opacity: 1; }
+.ib { width: 36px; height: 36px; }
+.btn { height: 38px; font-size: 14px; }
+.tbtn { height: 36px; font-size: 12px; }
+.log { font-size: 14px; max-height: 280px; }
+.log li { padding: 12px 16px; }
+.log time, .log em, .log .rep, .seg button { font-size: 12px; }
+.log li.dim { opacity: 1; }
+.log li.dim .tx { color: var(--muted); }
+.cap { min-height: 44px; font-size: 12px; padding: 12px 16px; letter-spacing: .06em; flex-wrap: wrap; }
+.cap .meta { font-size: 12px; letter-spacing: 0; }
+.eyebrow, .readout .k, .census, .census-head, .census-legend, .toolbar .hint, .range { font-size: 12px; }
+.eyebrow { letter-spacing: .08em; }
+.source-note, .metric-scope { color: var(--muted); font: 12px/1.6 var(--f-mono); overflow-wrap: anywhere; }
+.source-note code { font-size: inherit; }
+.checks .source-note { display: block; margin-top: 4px; }
+.health { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.health > * { min-width: 0; }
+.health > :last-child { grid-column: 1 / -1; }
+.health-summary { padding: 16px 20px; margin: 0; background: var(--inset); border-left: 3px solid var(--stain); font: 14px/1.6 var(--f-mono); }
+.checks li { grid-template-columns: 100px minmax(0, 1fr); font-size: 16px; padding: 16px 20px; }
+.tag { font-size: 12px; letter-spacing: .02em; }
+.cov { padding: 24px; gap: 12px; }
+.wm { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wm li { padding: 20px; border-right: 1px solid var(--line-soft); }
+.wm li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; }
+.wm .k { font-size: 12px; letter-spacing: .02em; }
+.wm .source-note { grid-column: 1 / -1; }
+.cycle-evidence { display: grid; gap: 4px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font: 12px/1.6 var(--f-mono); overflow-wrap: anywhere; }
+.cycle-evidence a { color: var(--stain); text-underline-offset: 3px; }
+.visual-note { padding: 12px 16px; margin: 0; border-top: 1px solid var(--line-soft); color: var(--muted); font: 12px/1.6 var(--f-body); }
+.instrument-details > summary, .cycle-details > summary, .sources summary { cursor: pointer; padding: 16px 20px; color: var(--ink-2); font-size: 14px; }
+.instrument-body { display: grid; gap: 20px; padding: 0 20px 20px; }
+.instrument-signal { background: var(--stage); border-radius: var(--radius-s); }
+.strip { flex-wrap: wrap; }
+.readout { white-space: normal; min-width: 140px; padding: 12px; }
+#eeg { min-width: 0; }
+.cycle-details .cycle { margin: 0 20px 20px; }
+.cycle p { font-size: 16px; color: var(--ink-2); }
+.cycle .n { font-size: 12px; }
+.sources { border: 1px solid var(--line); border-radius: var(--radius-m); font-size: 14px; }
+.sources ol { display: block; columns: 2; }
+.sources details[open] ol { margin: 0 20px 20px 24px; }
+.sources li { break-inside: avoid; padding-bottom: 8px; }
+.cov-note { font: 12px/1.6 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; }
+.axis span { white-space: nowrap; }
+footer { font: 13px/1.6 var(--f-body); max-width: none; padding-top: 16px; color: var(--muted); }
+@media (max-width: 1100px) { .stage { grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); } .legend { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wm { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .stage { grid-template-columns: minmax(0, 1fr); } .side { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .legend { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 720px) {
+  .wrap { gap: 20px; padding-block: 20px; }
+  header h1 { font-size: 2.5rem; }
+  .operations, .health, .wm, .side { grid-template-columns: minmax(0, 1fr); }
+  .health > :last-child { grid-column: auto; }
+  .brain-nav { gap: 4px; display: grid; grid-template-columns: .7fr 1.2fr 1fr; }
+  .brain-nav button { font-size: 14px; padding: 12px 4px; gap: 6px; align-items: start; }
+  .tab-index { display: none; }
+  .health-quick { margin-left: 0; width: 100%; }
+  .legend { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .legend button { padding: 10px 8px; }
+  .legend button[aria-pressed="true"] { padding-bottom: 8px; }
+  .btn, .tbtn, .lang, .lang button, .ib, .seg button { min-height: 44px; }
+  .ib { width: 44px; min-width: 44px; }
+  .cap { padding: 12px; gap: 8px; }
+  .inspector { padding: 20px; }
+  .checks li { grid-template-columns: 88px minmax(0, 1fr); padding: 16px; }
+  .sc-item { grid-template-columns: 24px minmax(0, 1fr); }
+  .sc-acts { grid-column: 2; flex-wrap: wrap; }
+  .sources ol { columns: 1; }
+  .strip { -webkit-mask-image: none; mask-image: none; }
+  .cycle-details .cycle { margin: 0 12px 12px; }
+}
+</style>
+
+<!-- fine-ink icon set: one 24-unit grid, one stroke weight, round terminals (styled by .ic) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z"/><path d="M13.5 8.5l2 2"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3z"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4"/><path d="M9.5 12h6M9.5 15.5h6M9.5 8.5h2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-resume" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4h-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-thumb-up" viewBox="0 0 24 24"><path d="M4 11h3v9H4z"/><path d="M7 11l4-7.5a2 2 0 0 1 2 2V10h5.2a1.8 1.8 0 0 1 1.8 2.1l-1.3 6.4A1.8 1.8 0 0 1 16.9 20H7"/></symbol>
+  <symbol id="i-thumb-down" viewBox="0 0 24 24"><path d="M20 13h-3V4h3z"/><path d="M17 13l-4 7.5a2 2 0 0 1-2-2V14H5.8A1.8 1.8 0 0 1 4 11.9l1.3-6.4A1.8 1.8 0 0 1 7.1 4H17"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 21 19.5H3z"/><path d="M12 10v4.5M12 17v.01"/></symbol>
+  <symbol id="i-octagon" viewBox="0 0 24 24"><path d="M8.5 3.5h7l5 5v7l-5 5h-7l-5-5v-7z"/><path d="M12 8v5M12 16v.01"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-20 12 12)"/><circle cx="12" cy="12" r="2.2"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.4V4.5a1 1 0 0 1 1-1h7.9l8.1 8.1-9 9z"/><circle cx="8" cy="8" r="1.3"/></symbol>
+  <symbol id="i-fibers" viewBox="0 0 24 24"><path d="M3 17.5c4.5 0 4.5-11 9-11s4.5 11 9 11"/><path d="M3 12.5c4.5 0 4.5-4 9-4s4.5 4 9 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h3l2.5-6 3.5 12 3-8 2 2h4"/></symbol>
+  <symbol id="i-crosshair" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></symbol>
+</svg>
+
+<a class="skip-link" href="#live" data-i18n="skipMain">Skip to the live brain</a>
+<main class="wrap" id="main">
+  <header>
+    <div class="plate-top">
+      <div class="plate-id">
+        <div class="eyebrow" data-i18n="eyebrow"></div>
+        <h1><span data-i18n="h1"></span><span class="sub" data-i18n="sub"></span></h1>
+      </div>
+      <div class="console">
+        <!-- live.js renders the connection state here: [stain dot] LIVE · last event … -->
+        <div class="rec" id="liveRec" role="status"><i></i><b>…</b><small></small></div>
+        <div class="lang" role="group" aria-label="Theme" data-i18n-aria="themeGroup">
+          <button type="button" data-theme="light" aria-pressed="false" title="Light" aria-label="Light" data-i18n-title="themeLight" data-i18n-aria="themeLight"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sun"/></svg></button>
+          <button type="button" data-theme="dark" aria-pressed="false" title="Dark" aria-label="Dark" data-i18n-title="themeDark" data-i18n-aria="themeDark"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-moon"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="state-console">
+      <span id="stateRec" class="state-readout" role="status" aria-live="polite" data-status="loading">…</span>
+      <button type="button" class="btn" id="refreshState"><svg class="ic sm" aria-hidden="true"><use href="#i-resume"/></svg><span data-i18n="refreshState"></span></button>
+      <a class="health-quick" href="#health"><span data-i18n="navHealth"></span> · <span id="healthQuick">—</span></a>
+    </div>
+  </header>
+
+  <div class="brain-nav" id="brainNav" role="tablist" aria-label="Brain sections" data-i18n-aria="navLabel">
+    <button type="button" id="tab-live" role="tab" aria-selected="true" aria-controls="live" tabindex="0"><span class="tab-index">01</span><span data-i18n="navLive">Live</span></button>
+    <button type="button" id="tab-health" role="tab" aria-selected="false" aria-controls="health" tabindex="-1"><span class="tab-index">02</span><span data-i18n="navHealth">Health &amp; memory</span></button>
+  </div>
+
+  <section class="view" id="live" role="tabpanel" aria-labelledby="tab-live" tabindex="0">
+    <div class="stage">
+    <div class="viewer-column">
+    <div class="viewer">
+      <div class="viewer-head">
+        <span class="cap-l"><span class="fig">Fig. I</span><span id="vhLeft"></span></span>
+        <span class="cap-r"><span class="scalebar" id="scaleBar" aria-hidden="true"><i></i><span>2 cm</span></span></span>
+      </div>
+      <div id="gl" role="img"><div class="loading" id="loading" data-i18n="loading">loading tissue…</div></div>
+      <div id="labels"></div>
+      <div class="toolbar">
+        <label class="range" for="opacity"><span data-i18n="cortex"></span><input type="range" id="opacity" min="0" max="100" value="39"></label>
+        <div class="tgroup" role="group">
+          <button type="button" class="tbtn" id="btnRotate" aria-pressed="true"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-orbit"/></svg><span data-i18n="rotate"></span></button>
+          <button type="button" class="tbtn" id="btnLabels" aria-pressed="true"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-tag"/></svg><span data-i18n="labels"></span></button>
+          <button type="button" class="tbtn" id="btnFibers" aria-pressed="true"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-fibers"/></svg><span data-i18n="fibers"></span></button>
+        </div>
+        <button type="button" class="tbtn solo" id="btnAll"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg><span data-i18n="showAll"></span></button>
+        <span class="hint" data-i18n="vhRight"></span>
+      </div>
+    </div>
+    <section class="plate" id="regions" aria-label="Regions" data-i18n-aria="regionPicker">
+      <div class="cap"><span data-i18n="regionPicker"></span><span class="meta" data-i18n="regionHint"></span></div>
+      <div id="atlas"><div class="legend" id="legend"></div></div>
+    </section>
+    </div>
+
+    <div class="side">
+      <div class="plate pulse-panel">
+        <div class="cap"><span class="fig">Fig. II</span><span data-i18n="logHead"></span><span class="meta" id="logMode"></span><span class="seg" role="group" id="logFilter"><button type="button" data-filter="salient" aria-pressed="true" data-i18n="logImportant"></button><button type="button" data-filter="all" aria-pressed="false" data-i18n="logAll"></button></span></div>
+        <ul class="log" id="log" aria-live="polite"></ul>
+      </div>
+      <div class="plate region-inspector">
+        <div class="cap"><span class="fig">Fig. III</span><span data-i18n="figRegion"></span></div>
+        <div class="inspector" id="inspector"></div>
+        <div class="ctrl">
+          <button type="button" class="btn primary" id="btnFire"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg><span data-i18n="fire"></span></button>
+          <button type="button" class="btn" id="btnReplay"><svg class="ic sm" aria-hidden="true" focusable="false"><use href="#i-wave"/></svg><span data-i18n="forceReplay"></span></button>
+          <button type="button" class="btn" id="btnPause" aria-pressed="false"></button>
+        </div>
+        <p class="visual-note" data-i18n="visualOnly"></p>
+      </div>
+    </div>
+    </div>
+    <details class="plate instrument-details" id="instrument">
+      <summary><span class="fig">Fig. VI</span> <span data-i18n="instrumentHead"></span></summary>
+      <div class="instrument-body">
+        <div class="strip" role="group" aria-label="Instrument readouts" data-i18n-aria="instrumentHead">
+          <div class="readout"><span class="k" data-i18n="rhythms"></span><b><span class="dot" id="modeDot"></span><span id="modeLabel"></span></b></div>
+          <div class="readout"><span class="k" data-i18n="clock"></span><b id="clock">--:--:--</b></div>
+          <div class="readout"><span class="k" data-i18n="nextReplay"></span><b id="nextReplay">--:--</b></div>
+          <div class="readout"><span class="k" data-i18n="utcRoll"></span><b id="utcRoll">--:--:--</b></div>
+          <div class="readout"><span class="k" data-i18n="circ"></span><b id="circ">--</b></div>
+          <div class="readout"><span class="k" data-i18n="ultra"></span><b id="ultra">--%</b></div>
+          <div class="readout"><span class="k" data-i18n="snapshotGen"></span><b id="snapshotGen">—</b></div>
+          <div class="readout"><span class="k" data-i18n="pulses"></span><b id="spikeCount">0</b></div>
+        </div>
+        <div class="instrument-signal"><div class="census" id="census"></div></div>
+        <div class="eyebrow" data-i18n="eegHead"></div>
+        <p class="visual-note" data-i18n="eegNote"></p>
+        <div class="eeg-wrap"><canvas id="eeg"></canvas></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="view" id="health" role="tabpanel" aria-labelledby="tab-health" tabindex="0" hidden>
+    <div class="section-head">
+      <div class="eyebrow"><span class="fig">Fig. VIII</span><span data-i18n="healthEyebrow"></span></div>
+      <h2 data-i18n="healthH2"></h2>
+      <p data-i18n="healthP"></p>
+    </div>
+    <p class="health-summary" id="healthSummary" role="status" aria-live="polite">—</p>
+    <div class="health">
+      <div class="plate">
+        <div class="cap" data-i18n="sourcesHead"></div>
+        <ul class="checks" id="healthChecks"></ul>
+      </div>
+      <div class="plate">
+        <div class="cov">
+          <div class="eyebrow" data-i18n="covHead"></div>
+          <div style="font-family:var(--f-display); font-size:2rem; line-height:1" class="mono"><span id="covNow">—</span><span id="covGoal" style="font-size:.5em; color:var(--muted)"></span></div>
+          <div class="bar" role="img" id="covBar" aria-label=""><i style="width:0%"></i><span class="thr" hidden></span></div>
+          <div class="axis"><span style="left:0; transform:none">0</span><span style="left:50%">50</span><span style="left:100%; transform:translateX(-100%)">100 %</span></div>
+          <div id="covScope" class="metric-scope"></div>
+          <div class="cov-note" id="covTs" style="color:var(--muted); font-size:.85rem"></div>
+        </div>
+        <div class="cov" style="border-top:1px solid var(--line)">
+          <div class="eyebrow" data-i18n="benchHead"></div>
+          <div style="font-family:var(--f-display); font-size:2rem; line-height:1" class="mono"><span id="benchNow">—</span><span style="font-size:.5em; color:var(--muted)" data-i18n="benchGoal"></span></div>
+          <div class="bar" role="img" id="benchBar" aria-label=""><i style="width:0%"></i></div>
+          <div class="axis"><span style="left:0; transform:none">0</span><span style="left:100%; transform:translateX(-100%)">1</span></div>
+          <div id="benchScope" class="metric-scope"></div>
+          <div class="cov-note" id="benchTs" style="color:var(--muted); font-size:.85rem"></div>
+        </div>
+      </div>
+      <div class="plate">
+        <div class="cap"><span data-i18n="wmHead"></span></div>
+        <ul class="wm" id="healthWm"></ul>
+        <p class="visual-note" data-i18n="artifactNote"></p>
+      </div>
+    </div>
+    <details class="plate cycle-details" id="cycle">
+      <summary><span class="fig">Fig. VII</span> <span data-i18n="cycleH2"></span></summary>
+      <div class="cycle" id="cycleLive">
+        <div><span class="n" data-i18n="c1n"></span><h3 data-i18n="c1h"></h3><p data-i18n="c1p"></p><div class="cycle-evidence" data-cycle="tasks">—</div></div>
+        <div><span class="n" data-i18n="c2n"></span><h3 data-i18n="c2h"></h3><p data-i18n="c2p"></p><div class="cycle-evidence" data-cycle="memory">—</div></div>
+        <div><span class="n" data-i18n="c3n"></span><h3 data-i18n="c3h"></h3><p data-i18n="c3p"></p><div class="cycle-evidence" data-cycle="night">—</div></div>
+        <div><span class="n" data-i18n="c4n"></span><h3 data-i18n="c4h"></h3><p data-i18n="c4p"></p><div class="cycle-evidence" data-cycle="protocols">—</div></div>
+      </div>
+    </details>
+
+  <section class="sources" id="sources">
+    <details><summary><span class="fig">Refs.</span> <span data-i18n="srcHead"></span></summary>
+    <ol>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5783826" target="_blank" rel="noopener" data-i18n="s1"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7611961" target="_blank" rel="noopener" data-i18n="s2"></a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/28772119/" target="_blank" rel="noopener" data-i18n="s3"></a></li>
+      <li><a href="https://ideas.repec.org/a/nat/nature/v437y2005i7062d10.1038_nature04053.html" target="_blank" rel="noopener" data-i18n="s4"></a></li>
+      <li><a href="https://neurocenter-unige.ch/research-groups/armin-schnider/" target="_blank" rel="noopener" data-i18n="s5"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC33638" target="_blank" rel="noopener" data-i18n="s6"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5895040" target="_blank" rel="noopener" data-i18n="s7"></a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/19226510/" target="_blank" rel="noopener" data-i18n="s8"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5148230/" target="_blank" rel="noopener" data-i18n="s9"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6741045/" target="_blank" rel="noopener" data-i18n="s10"></a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/15541308/" target="_blank" rel="noopener" data-i18n="s11"></a></li>
+      <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4340169/" target="_blank" rel="noopener" data-i18n="s12"></a></li>
+      <li><a href="https://doi.org/10.1073/pnas.0900234106" target="_blank" rel="noopener" data-i18n="s13"></a></li>
+      <li><a href="https://doi.org/10.1016/j.tics.2015.10.004" target="_blank" rel="noopener" data-i18n="s14"></a></li>
+    </ol>
+    </details>
+  </section>
+  </section>
+
+  <footer data-i18n="footer"></footer>
+</main>
+
+<script src="views.js"></script>
+<!-- the 3D engine travels with the repo (three.js r128, MIT — vendor/README.md): the atlas asks no
+     other host for code, so it loads on a box without internet -->
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ================= i18n ================= */
+  // Add a language: copy the "en" block, translate the values, add a button with data-lang.
+  const I18N = {
+    en: {
+      title: "Agent brain",
+      skipMain: "Skip to the live brain", navLabel: "Brain sections",
+      navLive: "Live", navHealth: "Health & memory",
+      regionPicker: "Explore the twelve regions", regionHint: "Select to inspect",
+      instrumentHead: "Instrument readings · rhythms, anatomy and visual EEG",
+      refreshState: "Refresh evidence", snapshotGen: "latest backup",
+      visualOnly: "Preview controls affect only this view. They do not run a job or change memory.",
+      neuroNote: "Biological analogy", sourcesHead: "Observed sources",
+      pulseLabel: "Last observed pulse", noPulse: "No pulse observed in this view yet.",
+      artifactNote: "Artifact update times, not proof that a scheduled job succeeded. Missing evidence is never a green check.",
+      langGroup: "Language", themeGroup: "Theme", themeLight: "Light", themeDark: "Dark",
+      figRegion: "Region inspector",
+      censusHead: "Neuron census of the human brain", c_cortex: "Cerebral cortex", c_cb: "Cerebellum", c_rest: "Rest of brain",
+      compartment: "Compartment", fibers: "Fibers",
+      s8: "Azevedo et al. (2009) · equal numbers of neuronal and nonneuronal cells in the human brain, J Comp Neurol",
+      s9: "Zelano et al. (2016) · nasal respiration entrains human limbic oscillations, J Neurosci",
+      s10: "Beggs &amp; Plenz (2003) · neuronal avalanches in neocortical circuits, J Neurosci",
+      s11: "Buzsáki &amp; Draguhn (2004) · neuronal oscillations in cortical networks, Neuron",
+      s12: "Massobrio et al. (2015) · criticality as a signature of healthy neural systems, Front Syst Neurosci",
+      s13: "Christoff et al. (2009) · mind wandering recruits the default and the executive networks, PNAS",
+      s14: "Beaty et al. (2016) · creative cognition couples the default and executive networks, Trends Cogn Sci",
+      eyebrow: "Plate I · functional map · personal agent kit",
+      h1: "The agent's brain",
+      sub: "Observe activity. Inspect memory. Follow the evidence.",
+      simulation: "Simulation", live: "Live", rhythms: "handoff rhythms",
+      clock: "browser clock", nextReplay: "quarter-hour reference", utcRoll: "UTC rollover", pulses: "pulses",
+      circ: "24h cycle", ultra: "90-min cycle", day: "day", night: "night", band: "band",
+      vhLeft: "86.06 billion neurons · a complete human brain", vhRight: "drag to rotate · click a region",
+      vitRate: "breathing · 15/min", vitRestOn: "at rest · agent idle", vitRestOff: "on task",
+      glLabel: "Rotating 3D brain with colored regions and neural pulses",
+      loading: "loading tissue…", noGl: "WebGL could not load (three.js).",
+      cortex: "cortex", rotate: "Rotate", labels: "Labels", showAll: "Show all",
+      fire: "Preview pulse", forceReplay: "Preview replay", pause: "Pause view", resume: "Resume view",
+      logHead: "Pulse log", simulated: "simulated", realEvents: "real events", logImportant: "important", logAll: "all",
+      eegHead: "Multichannel EEG · one channel per region", eegNote: "Visual analogy driven by activity; not a physiological measurement or proof that a job ran.",
+      inAgent: "In the agent", state: "State", trace: "Trace", isolate: "Isolate in the brain",
+      cycleEyebrow: "Core cycle",
+      cycleH2: "How an experience becomes a reflex",
+      cycleP: "The sequence the human brain completes between waking and sleep, and the one the agent completes between one session and the next.",
+      c1n: "1 · waking", c1h: "Experience", c1p: "The session keeps context in <code>temp/current-context.md</code>, the way the prefrontal cortex holds what it is using right now.",
+      c2n: "2 · encoding", c2h: "Hippocampus", c2p: "<code>memory_add</code> and <code>pak memory add</code> write through the memory service, the single writer of the local Qdrant.",
+      c3n: "3 · sleep", c3h: "Replay", c3p: "The night consolidation leaves dated evidence. Check freshness before assuming that a cycle ran.",
+      c4n: "4 · cortex", c4h: "Protocol and guard", c4p: "Lessons inform versioned procedures and guards. A published lesson is not automatically a compiled rule.",
+      healthEyebrow: "Neurological exam · observed evidence",
+      healthH2: "What the evidence says",
+      healthP: "Sources, freshness and scope. A connected feed is not a health check.",
+      covHead: "Last coverage report", covGoal: " %",
+      benchHead: "Memory benchmark", benchGoal: " · 0–1",
+      wmHead: "Cycle evidence · last artifact update",
+      srcHead: "Neuroscience cited",
+      s1: "Rothschild et al. · cortical–hippocampal–cortical loop during consolidation",
+      s2: "Review · sharp waves, spindles and slow oscillations in NREM sleep",
+      s3: "Davis &amp; Zhong (2017) · The Biology of Forgetting, Neuron",
+      s4: "Barnes, Graybiel et al. (2005) · the striatum recodes procedural memories, Nature",
+      s5: "Schnider · orbitofrontal reality filtering (ORFi)",
+      s6: "McGaugh, Cahill &amp; Roozendaal · the amygdala modulates storage in other regions",
+      s7: "Morales, Lau &amp; Fleming (2018) · metacognition in prefrontal cortex, J Neurosci",
+      footer: "Agent brain · Anatomy is the map. Observed events and sources are the evidence.",
+      every30: "every 30 min", start: "start", manual: "manual",
+      logStart: "Brain online · live layer connected to the agent: every pulse below is a real event.",
+      logReplay: "Replay: night consolidation. High-frequency ripples hippocampus → thalamus → cortex.",
+      logReplayManual: "Visual preview only: hippocampus → thalamus → cortex. No job was run.",
+      logReindex: "Memory index refreshed.",
+      logRollover: "UTC rollover: counters reset to zero.",
+      // the live layer (live.js): the connection, the evidence of each region, the health panel.
+      // {name} is a placeholder the live layer fills.
+      liveFeed: "LIVE FEED", reconnecting: "RECONNECTING", lastEvent: "last event {when}", liveBrain: "Live brain",
+      noObservation: "no specific observation", noProbe: "Functional analogy; no independent probe for this region.",
+      openTasks: "open tasks: {n}", tasksTrace: "TASKS.md · {title}", noTitles: "no recent titles",
+      verdicts: "observed verdicts: {n}", verdictsTrace: "Guard log · not a test of every guard.",
+      protocolCount: "protocols: {n}", gitTrace: "git · {commit}", noGit: "No git revision available",
+      memoryHealthy: "healthy · {shared} shared + {personal} personal", memoryDegraded: "degraded",
+      memoryTrace: "/memory/health · collection counts",
+      lessonCount: "lessons: {n}", noSource: "no source",
+      delegations: "recent delegations: {n}", a2aTrace: "A2A {cid} · {intent} · {status}", noA2a: "No recent A2A evidence",
+      noBackup: "no backup observed", storageUp: "storage available", storageDown: "storage not available",
+      staleEvidence: "evidence not updated", stateUnreachable: "Could not read /api/brain/state",
+      stateError: "State unavailable · {why} · retrying", stateFresh: "Evidence updated {when}",
+      stateLate: "Evidence updated {when} · late", stateLoading: "Loading evidence…",
+      noData: "no data yet",
+      checkServices: "brain services", checkMemory: "shared memory (Qdrant)", checkMemoryUser: "personal memory",
+      checkSnapshot: "latest brain backup", servicesUp: "brain services · the probe reports no failures",
+      servicesDown: "services down: {detail}", checkDetail: "{label} · {detail}",
+      stOk: "fresh", stStale: "stale", stMissing: "missing", stInvalid: "invalid", stDown: "down", stWarn: "review", stUnknown: "unverified",
+      covScope: "{files} files · {lines} lines. Last run of the whole test suite.",
+      covGate: " % · gate {target} %", benchItems: "items: {n}",
+      healthCount: "{fresh} fresh · {attention} need attention",
+      healthUnavailable: "Evidence could not be updated. Last readings are retained, not asserted healthy.",
+      cycleNight: "night consolidation", cycleNightSeen: "{status} · {when}",
+      cycleMemory: "lessons: {lessons} · memory entries: {entries}",
+      cycleProtocols: "protocols in git: {n}", inspect: "Inspect evidence →",
+      logFire: name => `Manual fire: ${name}.`
+    },
+  };
+  const LANGS = Object.keys(I18N);
+  let lang = "en";
+  try { const saved = localStorage.getItem("brain-lang"); if (saved && I18N[saved]) lang = saved; } catch (_) {}
+  const t = k => (I18N[lang][k] !== undefined ? I18N[lang][k] : I18N.en[k]);
+  const L = obj => (obj && typeof obj === "object" ? (obj[lang] || obj.en) : obj);
+  // one fine-ink icon from the sprite (#i-*), styled by .ic
+  const ic = (name, size) => `<svg class="ic${size ? " " + size : ""}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
+
+  /* ================= Data: every region traces to the handoff ================= */
+  const NODES = [
+    { id: "cb", order: 1, short: { en: "CB" },
+      name: { en: "Cerebellum" },
+      proc: { en: "Conditioned reflexes" },
+      impl: { en: "The guards: auto-guard, url-guard, pre-write-guard and rm-guard. They block before thinking." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Classical conditioning (blinking at a tone) depends on the cerebellum: a learned response that runs without deliberation." } },
+    { id: "bg", order: 2, short: { en: "BG" },
+      name: { en: "Basal ganglia" },
+      proc: { en: "Procedural memory" },
+      impl: { en: "Versioned protocols in protocols/. The observed count comes from the repository." },
+      state: { en: "awaiting evidence" },
+      trace: "0f79f5d · fa2fc11 update.sh · 3cfb834 odoo",
+      neuro: { en: "They hold habits and sequences. In rats, striatal activity shifts as a habit is acquired, lost and regained: the basal ganglia rewrite procedures as well as store them." } },
+    { id: "atl", order: 3, short: { en: "TL" },
+      name: { en: "Temporal lobe" },
+      proc: { en: "Semantic memory" },
+      impl: { en: "The memory service over the local Qdrant: the shared and the personal collection." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "The anterior temporal pole stores facts and concepts apart from the episode where they were learned: knowing what something is without remembering when you learned it." } },
+    { id: "post", order: 4, short: { en: "PO" },
+      name: { en: "Parieto-occipital cortex" },
+      proc: { en: "Episodic memory" },
+      impl: { en: "Lessons learned (pak lessons): what happened and the control that came out of it." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "After consolidation, episodes no longer depend on the hippocampus alone; they are spread across posterior cortical networks that reactivate on recall." } },
+    { id: "hip", order: 5, short: { en: "HIP" },
+      name: { en: "Hippocampus" },
+      proc: { en: "Encoding" },
+      impl: { en: "memory_add and pak memory add write through the memory service, the single writer." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Captures what is new, fast. During NREM sleep it replays the day's sequences in sharp-wave ripples (SWR), which drive the neocortex and fix the memory long term." } },
+    { id: "tha", order: 6, short: { en: "THA" },
+      name: { en: "Thalamus" },
+      proc: { en: "Sleep and offline replay" },
+      impl: { en: "The night consolidation (03:30) and the local brain backups." },
+      state: { en: "awaiting evidence" },
+      trace: "cron */15 · reindex 30 min",
+      neuro: { en: "Generates sleep spindles. Cortical slow oscillations, thalamic spindles and hippocampal SWRs couple to coordinate the hippocampus → cortex transfer." } },
+    { id: "amy", order: 7, short: { en: "AMY" },
+      name: { en: "Amygdala" },
+      proc: { en: "Salience" },
+      impl: { en: "What the human says and what fails weigh more: prompts and errors stand out in the log." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "It tags the memory instead of storing it. Emotional arousal releases noradrenaline in the amygdala, which strengthens consolidation in the hippocampus and cortex." } },
+    { id: "vta", order: 8, short: { en: "VTA" },
+      name: { en: "Brainstem and ventral tegmental area" },
+      proc: { en: "Active forgetting" },
+      impl: { en: "Consolidation marks an older duplicate replaced; pak memory forget drops one memory." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Forgetting is an active process. Dopaminergic neurons act on engram cells and, via Rac1/cofilin, dismantle their structure. Forgetting may be the brain's default state." } },
+    { id: "ofc", order: 9, short: { en: "OFC" },
+      name: { en: "Orbitofrontal cortex" },
+      proc: { en: "Anti-confabulation" },
+      impl: { en: "Validate before asserting: url-guard on what is fetched, the injection guard on what is remembered." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Area 13 emits an extinction signal at 200–300 ms when an evoked memory has no match in present reality. Damage here produces confabulation." } },
+    { id: "apfc", order: 10, short: { en: "aPFC" },
+      name: { en: "Anterior prefrontal cortex" },
+      proc: { en: "Executive control and metacognition" },
+      impl: { en: "The decision layer and A2A: guard before mutating, delegate with a correlation id." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Evaluates its own confidence. Activity patterns in anterior prefrontal cortex predict how sure someone is of their memory or perception." } },
+    { id: "dlpfc", order: 11, short: { en: "DLPFC" },
+      name: { en: "Dorsolateral prefrontal cortex" },
+      proc: { en: "Working memory" },
+      impl: { en: "The session and TASKS.md: what is open right now." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "Keeps information active and workable for a few seconds, for the action at hand. It is the surface: what is being thought right now." } },
+    { id: "hypo", order: 12, short: { en: "HYPO" },
+      name: { en: "Hypothalamus" },
+      proc: { en: "Homeostatic alarm — compaction" },
+      impl: { en: "PreCompact hook: a compact event. Context is sacrificed, and the moment is logged." },
+      state: { en: "awaiting evidence" },
+      trace: { en: "No operational sample yet." },
+      neuro: { en: "The hypothalamus runs the acute stress response: when survival is at stake it triggers a generalized alarm through the body. Compaction is that moment for the agent — context is lost — and the convulsion must stay recorded." } }
+  ];
+  const IDS = ["dlpfc", "apfc", "ofc", "atl", "post", "hip", "tha", "amy", "bg", "cb", "vta", "hypo"];
+  const RI = Object.fromEntries(IDS.map((id, i) => [id, i]));
+  // rhythm hierarchy (Buzsáki & Draguhn 2004): fast cortex, slow deep structures.
+  // Shared by the EEG (visual frequency per channel) and the neuron shader (uniform uBand).
+  const BAND = { dlpfc: 38, apfc: 30, ofc: 24, bg: 14, cb: 18, atl: 10, post: 9, hip: 7, tha: 12, amy: 16, vta: 5, hypo: 3 };
+  const BAND_OF = id => { const f = BAND[id]; return f <= 6 ? "delta · 1–4 Hz" : f <= 11 ? "theta · 4–8 Hz" : f <= 15 ? "alpha · 8–13 Hz" : f <= 30 ? "beta · 13–30 Hz" : "gamma · 30+ Hz"; };
+  const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+  const cssv = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const _ADD_MATS = []; // additive materials: the light theme switches them to NormalBlending
+  NODES.forEach(n => {
+    n.color = cssv("--r-" + n.id); n.act = 0; n.actP = 0; n.actM = 0; n.kick = 0;
+    n.status = "unknown";
+    n.state = { en: "awaiting evidence" };
+    n.trace = { en: "No operational sample yet." };
+  });
+
+  const TRACTS = [
+    ["dlpfc","hip"],["hip","tha"],["tha","post"],["tha","atl"],["hip","atl"],["amy","hip"],
+    ["ofc","apfc"],["apfc","dlpfc"],["apfc","bg"],["bg","tha"],["cb","bg"],["post","bg"],
+    ["vta","hip"],["vta","bg"],["amy","apfc"],["dlpfc","atl"],["ofc","atl"],["hip","post"],
+    ["tha","hypo"],["hypo","amy"]
+  ];
+  // NOTHING simulated: the pulses come ONLY from the agent's real events (live.js → agentBrain.ingest
+  // with data from /api/brain/state and /api/brain/events). This array stays empty on purpose.
+  const EVENTS = [];
+  let W_TOTAL = 0; // let (was const): live.js re-weighs if events are ever added here
+  window.__BRAIN = { // hook for live.js — runPath/activate mark a REAL event (they end the resting glow)
+    NODES, byId, setMode, setTheme3D, lang: () => lang, t, refresh: refreshRegionViews, observePulse,
+    runPath: (...a) => { touchReal(); runPath(...a); },
+    activate: (...a) => { touchReal(); activate(...a); },
+    vitals: () => ({ breath: nMat.uniforms.uBreath.value, insp: nMat.uniforms.uInsp.value, rest: nMat.uniforms.uRest.value, idleS: (performance.now() - lastRealTs) / 1000 }),
+    hemi: () => ({ ids: IDS.slice(), plus: IDS.map(id => byId[id].actP), minus: IDS.map(id => byId[id].actM) }) // D1: debug/E2E — reads the SAME state that frame() fills
+  };
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let selected = "hip", focus = -1, paused = false, spikeCount = 0, live = false, NCOUNT = 0;
+  let REAL_TOTAL = 86.06e9;
+  /* phase A — respiratory pacemaker (preBötzinger) and default network (Raichle):
+     BREATH_S 4 s = 0.25 Hz = 15/min, inside the measured human range 14.4–21.6 (Zelano 2016).
+     The resting glow only reacts to REAL feed events (live.js → __BRAIN/ingest), never to the simulation. */
+  const BREATH_S = 4.0;
+  let lastRealTs = performance.now();
+  function touchReal() { lastRealTs = performance.now(); }
+  const setNeuronCount = (n, total) => {
+    NCOUNT = n; if (total) REAL_TOTAL = total;
+    if (!n) return;
+    // the census is the real one (86,060 M, Azevedo 2009): no particle count nor sampling ratio in the HUD
+    document.getElementById("vhLeft").textContent = t("vhLeft");
+  };
+  const COMPART_OF = { dlpfc: "cortex", apfc: "cortex", ofc: "cortex", atl: "cortex", post: "cortex", hip: "cortex", amy: "cortex", cb: "cb", tha: "rest", bg: "rest", vta: "rest", hypo: "rest" };
+  const CENSUS = [ { k: "cortex", n: 16.34 }, { k: "cb", n: 69.03 }, { k: "rest", n: 0.69 } ];
+  const billions = v => lang === "es" ? `${(v * 1000).toLocaleString("es", { maximumFractionDigits: 0 })} millones` : `${v.toLocaleString("en", { maximumFractionDigits: 2 })} billion`;
+  function renderCensus() {
+    const el = document.getElementById("census"); if (!el) return;
+    el.innerHTML = `<div class="census-head"><span>${t("censusHead")}</span><span>${billions(86.06)}</span></div>
+      <div class="census-bar" role="img" aria-label="${CENSUS.map(c => t("c_" + c.k) + " " + (c.n / 86.06 * 100).toFixed(1) + "%").join(", ")}">
+        ${CENSUS.map(c => `<i class="seg-${c.k}" style="width:${(c.n / 86.06 * 100).toFixed(2)}%"></i>`).join("")}
+      </div>
+      <div class="census-legend">${CENSUS.map(c => `<span><i class="seg-${c.k}"></i>${t("c_" + c.k)} · ${billions(c.n)} · ${(c.n / 86.06 * 100).toFixed(1)}%</span>`).join("")}</div>`;
+  }
+
+  document.documentElement.lang = lang;
+  document.title = t("title");
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+
+  /* ================= Anatomical geometry (units: length ≈ 2.1, front = +z) ================= */
+  const HX = 0.38; // lateral center of each hemisphere
+  // base shape of a right hemisphere, given a unit direction (medial = -x)
+  function hemiShape(x, y, z) {
+    let px = x >= 0 ? x * 0.52 : -Math.pow(-x, 0.55) * 0.36;
+    let py = y >= 0 ? y * 0.74 : y * 0.5;
+    let pz = z >= 0 ? z * 1.06 : z * 1.0;
+    if (z > 0) { px *= 1 - 0.2 * z * z; py *= 1 - 0.12 * z; }
+    if (z < 0) { py *= 1 - 0.14 * z * z; }
+    if (y < 0 && x > 0) { // temporal lobe
+      const t = Math.exp(-(((z - 0.05) / 0.42) ** 2));
+      py -= 0.3 * x * (-y) * t; px += 0.05 * x * t;
+    }
+    return [px, py, pz];
+  }
+  // sulci pattern: a warped ridge network
+  function groove(x, y, z) {
+    const g1 = Math.sin(6.2 * x + 2.1 * Math.sin(4.3 * z + 1.4 * Math.sin(3.1 * y)))
+             * Math.sin(6.8 * y + 2.3 * Math.sin(3.9 * x + 0.7))
+             * Math.sin(5.9 * z + 2.0 * Math.sin(4.6 * y + 2.2 * x));
+    const g2 = Math.sin(13 * x + 3 * Math.sin(9 * y)) * Math.sin(12 * z + 3 * Math.sin(8 * x)) * Math.sin(11 * y + 2 * Math.sin(10 * z));
+    const s1 = 1 - smooth(0, 0.16, Math.abs(g1));
+    const s2 = 1 - smooth(0, 0.12, Math.abs(g2));
+    return Math.min(1, s1 + s2 * 0.45);
+  }
+  function smooth(a, b, v) { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); }
+
+  // Anatomical lobes: the Sylvian fissure sets the temporal apart; the central sulcus splits frontal from parietal.
+  const sylvianY = z => -0.2 + (0.38 - z) * 0.41;      // line of the lateral fissure (lateral view)
+  const centralZ = y => -0.08 + (0.72 - y) * 0.338;    // line of the central sulcus
+  const FRONTAL = [
+    ["apfc", 0.30, 0.18, 1.00], ["apfc", 0.55, 0.15, 0.85],
+    ["dlpfc", 0.62, 0.50, 0.45], ["dlpfc", 0.40, 0.66, 0.22], ["dlpfc", 0.25, 0.55, 0.60],
+    ["ofc", 0.35, -0.22, 0.78], ["ofc", 0.62, -0.12, 0.62]
+  ].map(([id, x, y, z]) => ({ ri: RI[id], x, y, z }));
+  function cortexRegion(ax, y, z) {
+    const lateral = ax > 0.42 && z > -0.78 && z < 0.5;
+    const dS = y - sylvianY(z), dC = z - centralZ(y);
+    if (lateral && dS < 0) return { ri: RI.atl, edge: -dS };
+    const eS = lateral ? Math.abs(dS) : 1;
+    if (dC < 0) return { ri: RI.post, edge: Math.min(-dC, eS) };
+    const best = new Float32Array(11).fill(1e9);
+    for (const c of FRONTAL) {
+      const d = (ax - c.x) ** 2 + (y - c.y) ** 2 + (z - c.z) ** 2;
+      if (d < best[c.ri]) best[c.ri] = d;
+    }
+    let b1 = 1e9, b2 = 1e9, r = 0;
+    for (let i = 0; i < 11; i++) {
+      if (best[i] < b1) { b2 = b1; b1 = best[i]; r = i; } else if (best[i] < b2) { b2 = best[i]; }
+    }
+    return { ri: r, edge: Math.min((Math.sqrt(b2) - Math.sqrt(b1)) * 0.6, dC, eS) };
+  }
+  // major sulci: depth 0..1
+  function majorSulci(lx, ly, lz) {
+    const lat = smooth(0.5, 0.72, lx);
+    const inS = lz > -0.45 && lz < 0.42 ? 1 : 0;
+    const sy = (1 - smooth(0, 0.04, Math.abs(ly - sylvianY(lz)))) * lat * inS;
+    const cs = (1 - smooth(0, 0.028, Math.abs(lz - centralZ(ly)))) * (ly > -0.08 ? 1 : 0);
+    return { sy, cs };
+  }
+
+  // estructuras profundas
+  const HIP_PTS = [[0.30,-0.36,0.18],[0.33,-0.32,-0.05],[0.30,-0.20,-0.30],[0.20,-0.04,-0.45]];
+  const CAU_PTS = [[0.16,0.12,0.42],[0.20,0.25,0.15],[0.22,0.22,-0.2],[0.26,0.05,-0.40],[0.30,-0.15,-0.30]];
+  function distPoly(p, pts) {
+    let best = 1e9;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      const ab = [b[0]-a[0], b[1]-a[1], b[2]-a[2]], ap = [p[0]-a[0], p[1]-a[1], p[2]-a[2]];
+      const t = Math.max(0, Math.min(1, (ap[0]*ab[0]+ap[1]*ab[1]+ap[2]*ab[2]) / (ab[0]**2+ab[1]**2+ab[2]**2)));
+      const d = Math.hypot(ap[0]-ab[0]*t, ap[1]-ab[1]*t, ap[2]-ab[2]*t);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  const inEll = (p, c, r) => ((p[0]-c[0])/r[0])**2 + ((p[1]-c[1])/r[1])**2 + ((p[2]-c[2])/r[2])**2 < 1;
+  const CB_C = [0, -0.52, -0.78], CB_R = [0.70, 0.33, 0.42];
+  const STEM_A = [0, -0.30, -0.17], STEM_B = [0, -1.25, -0.45];
+
+  // classifies a point; returns the region index or -1 when it is outside
+  function classify(x, y, z) {
+    const ax = Math.abs(x), p = [ax, y, z];
+    if (distPoly(p, HIP_PTS) < 0.058) return RI.hip;
+    if (Math.hypot(ax - 0.31, y + 0.38, z - 0.30) < 0.08) return RI.amy;
+    if (inEll(p, [0.11, -0.05, -0.12], [0.11, 0.11, 0.19])) return RI.tha;
+    if (inEll(p, [0.30, 0.0, 0.12], [0.075, 0.15, 0.24]) || distPoly(p, CAU_PTS) < 0.045) return RI.bg;
+    if (inEll([x, y, z], CB_C, CB_R)) return RI.cb;
+    if (distPoly([x, y, z], [STEM_A, STEM_B]) < 0.15 || inEll([x, y, z], [0, -0.55, -0.2], [0.2, 0.18, 0.18])) return RI.vta;
+    // hemisferio
+    const qx = ax - HX, ql = Math.hypot(qx, y, z) || 1e-6;
+    const s = hemiShape(qx / ql, y / ql, z / ql), R = Math.hypot(s[0], s[1], s[2]);
+    if (ql < R * 0.97) return cortexRegion(ax, y, z).ri;
+    return -1;
+  }
+
+  /* ================= Escena ================= */
+  const host = document.getElementById("gl");
+  if (!window.THREE) { document.getElementById("loading").textContent = t("noGl"); return; }
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.setClearColor(new THREE.Color(cssv("--stage")), 1);
+  host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, 16 / 11, 0.1, 50);
+  camera.position.set(3.3, 1.2, 2.6);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, -0.18, 0);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false; controls.minDistance = 2.4; controls.maxDistance = 7;
+  controls.autoRotate = !reduced; controls.autoRotateSpeed = 0.9;
+  let resumeT = null;
+  controls.addEventListener("start", () => { controls.autoRotate = false; clearTimeout(resumeT); });
+  controls.addEventListener("end", () => { if (rotateOn && !reduced) resumeT = setTimeout(() => { controls.autoRotate = true; }, 3500); });
+
+  scene.add(new THREE.HemisphereLight(0xdfe4ff, 0x20141a, 0.75));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(3, 4, 3); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x8fa2ff, 0.5); rim.position.set(-3, 1, -4); scene.add(rim);
+
+  const brain = new THREE.Group(); scene.add(brain);
+  const regionColors = IDS.map(id => new THREE.Color(byId[id].color));
+
+  // ---- cortex: two hemispheres with sulci and regions per vertex
+  const cortexMeshes = [];
+  const surf = []; // { geo, base, reg }
+  const cortexMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.04, transparent: true, opacity: 0.39, depthWrite: false, side: THREE.FrontSide });
+  [1, -1].forEach(side => {
+    const geo = new THREE.SphereGeometry(1, 240, 170);
+    const pos = geo.attributes.position, n = pos.count;
+    const base = new Float32Array(n * 3), reg = new Uint8Array(n), col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const vx = pos.getX(i), vy = pos.getY(i), vz = pos.getZ(i);
+      const s = hemiShape(vx, vy, vz);
+      const lx = HX + s[0], ly = s[1], lz = s[2];
+      const g0 = groove(lx, ly, lz), ms = majorSulci(lx, ly, lz);
+      const gr = Math.max(g0, ms.sy, ms.cs * 0.9);
+      const len = Math.hypot(s[0], s[1], s[2]) || 1;
+      const dep = 0.034 * g0 + 0.075 * ms.sy + 0.045 * ms.cs;
+      const fx = lx - s[0] / len * dep, fy = ly - s[1] / len * dep, fz = lz - s[2] / len * dep;
+      pos.setXYZ(i, side * fx, fy, fz);
+      const cr = cortexRegion(fx, fy, fz);
+      reg[i] = cr.ri;
+      const c = regionColors[cr.ri];
+      let shade = 0.92 - 0.5 * gr;
+      if (cr.edge < 0.022) shade *= 0.45; // frontera visible entre regiones
+      if (s[0] < -0.25) shade *= 0.85; // pared medial
+      base[i * 3] = c.r * shade; base[i * 3 + 1] = c.g * shade; base[i * 3 + 2] = c.b * shade;
+    }
+    if (side < 0) { // mirror: reverse the triangle order
+      const idx = geo.index.array;
+      for (let i = 0; i < idx.length; i += 3) { const t = idx[i]; idx[i] = idx[i + 2]; idx[i + 2] = t; }
+    }
+    col.set(base);
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, cortexMat);
+    mesh.renderOrder = 3; mesh.userData.surf = surf.length;
+    brain.add(mesh); cortexMeshes.push(mesh);
+    surf.push({ geo, base, reg });
+  });
+
+  // ---- cerebellum with folia
+  const solidMats = {};
+  function regionMat(id, opacity = 1) {
+    const c = regionColors[RI[id]];
+    const m = new THREE.MeshStandardMaterial({ color: c.clone().multiplyScalar(0.8), emissive: c.clone(), emissiveIntensity: 0.08, roughness: 0.55, metalness: 0.05, transparent: opacity < 1, opacity });
+    (solidMats[id] = solidMats[id] || []).push(m);
+    return m;
+  }
+  const pickables = [];
+  {
+    const geo = new THREE.SphereGeometry(1, 160, 110), pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i), vy = pos.getY(i), vz = pos.getZ(i);
+      let x = vx * CB_R[0], y = vy * CB_R[1] * (vy > 0 ? 0.85 : 1), z = vz * CB_R[2];
+      const wy = y + CB_C[1], wz = z + CB_C[2];
+      const f = 1 - smooth(0, 0.35, Math.abs(Math.sin(wy * 46 + wz * 16 + Math.sin(x * 6) * 0.8)));
+      const k = 1 - 0.035 * f - (Math.abs(x) < 0.05 ? 0.03 : 0);
+      pos.setXYZ(i, x * k, y * k + CB_C[1], z * k + CB_C[2]);
+    }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, regionMat("cb", 0.92)); m.userData.ri = RI.cb; m.renderOrder = 2;
+    brain.add(m); pickables.push(m);
+  }
+  // ---- brainstem and pons (ventral tegmental area at its top)
+  {
+    const len = Math.hypot(STEM_B[1] - STEM_A[1], STEM_B[2] - STEM_A[2]);
+    const geo = new THREE.CylinderGeometry(0.16, 0.11, len, 48, 8, false);
+    const m = new THREE.Mesh(geo, regionMat("vta", 0.95));
+    m.position.set(0, (STEM_A[1] + STEM_B[1]) / 2, (STEM_A[2] + STEM_B[2]) / 2);
+    m.rotation.x = -Math.atan2(STEM_B[2] - STEM_A[2], STEM_A[1] - STEM_B[1]);
+    m.userData.ri = RI.vta; brain.add(m); pickables.push(m);
+    const pons = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), regionMat("vta", 0.95));
+    pons.scale.set(0.2, 0.18, 0.18); pons.position.set(0, -0.55, -0.2); pons.userData.ri = RI.vta;
+    brain.add(pons); pickables.push(pons);
+  }
+  // ---- estructuras profundas, ambos lados
+  const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
+  [1, -1].forEach(s => {
+    const mir = pts => pts.map(p => new THREE.Vector3(p[0] * s, p[1], p[2]));
+    const hip = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mir(HIP_PTS)), 60, 0.055, 16, false), regionMat("hip"));
+    hip.userData.ri = RI.hip;
+    const cau = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mir(CAU_PTS)), 60, 0.042, 14, false), regionMat("bg"));
+    cau.userData.ri = RI.bg;
+    const put = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), regionMat("bg"));
+    put.scale.set(0.075, 0.15, 0.24); put.position.set(0.30 * s, 0, 0.12); put.userData.ri = RI.bg;
+    const tha = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), regionMat("tha"));
+    tha.scale.set(0.11, 0.11, 0.19); tha.position.set(0.11 * s, -0.05, -0.12); tha.userData.ri = RI.tha;
+    const amy = new THREE.Mesh(new THREE.SphereGeometry(0.078, 32, 24), regionMat("amy"));
+    amy.position.set(0.31 * s, -0.38, 0.30); amy.userData.ri = RI.amy;
+    [hip, cau, put, tha, amy].forEach(m => { m.renderOrder = 1; brain.add(m); pickables.push(m); });
+  });
+
+  /* ---- neurons in the real proportion of the human brain (Azevedo et al., 2009):
+         86.06 billion in total · cerebral cortex 16.34 · cerebellum 69.03 · rest 0.69.
+         Every point stands for the same number of real neurons in every compartment. */
+  const lowEnd = innerWidth < 700 || (navigator.deviceMemory || 8) < 4;
+  const BUDGET = lowEnd ? 260000 : 640000;
+  const TOTAL_REAL = 86.06e9;
+  const SHARE = { cortex: 16.34 / 86.06, cb: 69.03 / 86.06, rest: 0.69 / 86.06 };
+  const COMPART = { dlpfc: "cortex", apfc: "cortex", ofc: "cortex", atl: "cortex", post: "cortex", hip: "cortex", amy: "cortex", cb: "cb", tha: "rest", bg: "rest", vta: "rest" };
+  const nPos = new Float32Array(BUDGET * 3), nCol = new Float32Array(BUDGET * 3), nReg = new Float32Array(BUDGET), nPh = new Float32Array(BUDGET), nSz = new Float32Array(BUDGET), nSide = new Float32Array(BUDGET);
+  let NC = 0;
+  function addN(x, y, z, ri, size) {
+    if (NC >= BUDGET) return;
+    const c = regionColors[ri], j = NC * 3;
+    nPos[j] = x; nPos[j + 1] = y; nPos[j + 2] = z;
+    nCol[j] = c.r; nCol[j + 1] = c.g; nCol[j + 2] = c.b;
+    nReg[NC] = ri; nPh[NC] = Math.random() * 6.283; nSz[NC] = size; nSide[NC] = x >= 0 ? 1 : -1; NC++;
+  }
+  const randDir = () => { for (;;) { const x = Math.random() * 2 - 1, y = Math.random() * 2 - 1, z = Math.random() * 2 - 1, l = Math.hypot(x, y, z); if (l <= 1 && l > 1e-3) return [x / l, y / l, z / l]; } };
+  {
+    // cerebral cortex: grey matter (thin outer layer) + hippocampus and amygdala
+    const nCortex = Math.round(BUDGET * SHARE.cortex);
+    const nHip = Math.round(nCortex * 0.012), nAmy = Math.round(nCortex * 0.005);
+    let added = 0;
+    while (added < nCortex - nHip - nAmy) {
+      const v = randDir(), s = hemiShape(v[0], v[1], v[2]);
+      const k = 0.925 + Math.pow(Math.random(), 0.7) * 0.07; // grosor cortical ≈ 2–4 mm
+      const side = Math.random() < 0.5 ? 1 : -1;
+      const lx = HX + s[0] * k, ly = s[1] * k, lz = s[2] * k;
+      if (ly < -0.95) continue;
+      addN(side * lx, ly, lz, cortexRegion(lx, ly, lz).ri, 1.0); added++;
+    }
+    const fillShape = (n, test, box, ri, size) => {
+      let a = 0, tries = 0;
+      while (a < n && tries < n * 400) {
+        tries++;
+        const x = box[0] + Math.random() * (box[1] - box[0]), y = box[2] + Math.random() * (box[3] - box[2]), z = box[4] + Math.random() * (box[5] - box[4]);
+        if (test(x, y, z)) { addN(x, y, z, ri, size); a++; }
+      }
+    };
+    const both = f => (x, y, z) => f(Math.abs(x), y, z);
+    fillShape(nHip, both((x, y, z) => distPoly([x, y, z], HIP_PTS) < 0.055), [-0.4, 0.4, -0.45, 0.02, -0.5, 0.25], RI.hip, 0.9);
+    fillShape(nAmy, both((x, y, z) => Math.hypot(x - 0.31, y + 0.38, z - 0.30) < 0.075), [-0.4, 0.4, -0.46, -0.3, 0.22, 0.38], RI.amy, 0.9);
+
+    // cerebellum: 80 % of all neurons, nearly all tiny granule cells in the cortex of the folia
+    const nCb = Math.round(BUDGET * SHARE.cb);
+    added = 0;
+    while (added < nCb) {
+      const v = randDir();
+      const k = 0.8 + Math.pow(Math.random(), 0.5) * 0.19;
+      let x = v[0] * CB_R[0] * k, y = v[1] * CB_R[1] * k * (v[1] > 0 ? 0.85 : 1), z = v[2] * CB_R[2] * k;
+      // lamellae: the cells cluster on the crests of the folia
+      const wy = y + CB_C[1], wz = z + CB_C[2];
+      if (Math.abs(Math.sin(wy * 46 + wz * 16 + Math.sin(x * 6) * 0.8)) < 0.3 && Math.random() < 0.7) continue;
+      addN(x, wy, wz, RI.cb, 0.42); added++;
+    }
+
+    // rest of the brain (<1 %): thalamus, basal ganglia, brainstem
+    const nRest = BUDGET - NC;
+    const restTest = (x, y, z) => {
+      const ax = Math.abs(x), p = [ax, y, z];
+      if (inEll(p, [0.11, -0.05, -0.12], [0.11, 0.11, 0.19])) return RI.tha;
+      if (inEll(p, [0.30, 0.0, 0.12], [0.075, 0.15, 0.24]) || distPoly(p, CAU_PTS) < 0.042) return RI.bg;
+      if (distPoly([x, y, z], [STEM_A, STEM_B]) < 0.15 || inEll([x, y, z], [0, -0.55, -0.2], [0.2, 0.18, 0.18])) return RI.vta;
+      return -1;
+    };
+    let tries = 0, ra = 0;
+    while (ra < nRest && tries < nRest * 300) {
+      tries++;
+      const x = (Math.random() * 2 - 1) * 0.42, y = -1.25 + Math.random() * 1.55, z = -0.6 + Math.random() * 1.2;
+      const r = restTest(x, y, z);
+      if (r >= 0) { addN(x, y, z, r, 1.1); ra++; }
+    }
+  }
+  setNeuronCount(NC, TOTAL_REAL);
+  const nGeo = new THREE.BufferGeometry();
+  nGeo.setAttribute("position", new THREE.BufferAttribute(nPos.subarray(0, NC * 3), 3));
+  nGeo.setAttribute("color", new THREE.BufferAttribute(nCol.subarray(0, NC * 3), 3));
+  nGeo.setAttribute("aRegion", new THREE.BufferAttribute(nReg.subarray(0, NC), 1));
+  nGeo.setAttribute("aPhase", new THREE.BufferAttribute(nPh.subarray(0, NC), 1));
+    nGeo.setAttribute("aSize", new THREE.BufferAttribute(nSz.subarray(0, NC), 1));
+    nGeo.setAttribute("aSide", new THREE.BufferAttribute(nSide.subarray(0, NC), 1)); // D1: hemisphere of the point
+  const nMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+    uniforms: { uTime: { value: 0 }, uAct: { value: new Array(24).fill(0) }, uFocus: { value: -1 }, uPix: { value: renderer.getPixelRatio() }, uBreath: { value: 0 }, uInsp: { value: 0 }, uRest: { value: 0 }, uBand: { value: IDS.map(id => BAND[id] / 16) } },
+    vertexShader: `
+      attribute float aRegion; attribute float aPhase; attribute float aSize; attribute float aSide;
+      uniform float uTime; uniform float uAct[24]; uniform float uFocus; uniform float uPix;
+      uniform float uBreath; uniform float uInsp; uniform float uRest; uniform float uBand[12];
+      varying vec3 vColor; varying float vA;
+      void main() {
+        float act = 0.0; float band = 1.0;
+        /* D1 — activation per region AND hemisphere: uAct[i*2] = x>=0, uAct[i*2+1] = x<0.
+           A negative act (inhibitory echo) darkens: lowers vA, fires less and slower */
+        for (int i = 0; i < 12; i++) { if (abs(float(i) - aRegion) < 0.5) { act = uAct[i * 2 + (aSide >= 0.0 ? 0 : 1)]; band = uBand[i]; } }
+        float rate = (1.2 + act * 9.0) * band;
+        float fl = 0.32 + 0.28 * sin(uTime * rate + aPhase);
+        float tick = floor(uTime * (2.0 + act * 14.0) + aPhase * 3.0);
+        float fire = step(0.985 - act * 0.12, fract(sin(aPhase * 91.7 + tick * 12.9898) * 43758.5453));
+        vA = (fl * 0.5 + act * 0.55 + fire * 0.9) * (0.3 + 0.7 * aSize);
+        if (uFocus >= 0.0 && abs(uFocus - aRegion) > 0.5) vA *= 0.08;
+        /* breathing (preBötzinger complex, 15/min): a global ±8% wave — Zelano 2016:
+           the power in the amygdala (7) and hippocampus (5) peaks during inspiration */
+        float breath = 1.0 + 0.08 * uBreath;
+        if (abs(aRegion - 7.0) < 0.5 || abs(aRegion - 5.0) < 0.5) breath += 0.06 * uInsp;
+        /* default network (Raichle): ultraslow oscillation in aPFC (1) / posterior (4) / hippocampus (5)
+           while the agent is idle; any real event suppresses it */
+        float restGlow = 0.0;
+        if (abs(aRegion - 1.0) < 0.5 || abs(aRegion - 4.0) < 0.5 || abs(aRegion - 5.0) < 0.5)
+          restGlow = uRest * (0.55 + 0.45 * sin(uTime * 0.45 + aPhase));
+        vA = vA * (1.0 + 0.05 * uBreath) + restGlow * 0.55;
+        vColor = color;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = max(1.0, (1.7 + fire * 2.0 + act * 1.2 + restGlow * 1.1) * aSize * uPix * (3.2 / -mv.z) * breath);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying vec3 vColor; varying float vA;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        if (d > 0.5) discard;
+        float a = smoothstep(0.5, 0.0, d);
+        gl_FragColor = vec4(vColor * vA * 1.15, a * min(vA, 1.0));
+      }`
+  });
+
+  /* ---- white matter: axon bundles with the tractography color code (DTI)
+         red = left–right · green = anterior–posterior · blue = superior–inferior */
+  const fiberGroup = new THREE.Group(); brain.add(fiberGroup);
+  {
+    const NF = lowEnd ? 1400 : 3200, SEG = 14;
+    const fp = new Float32Array(NF * SEG * 6), fc = new Float32Array(NF * SEG * 6);
+    let fi = 0;
+    const gray = (side, k) => {
+      for (;;) {
+        const v = randDir(), s = hemiShape(v[0], v[1], v[2]);
+        const ly = s[1] * k; if (ly < -0.75) continue;
+        return new THREE.Vector3(side * (HX + s[0] * k), ly, s[2] * k);
+      }
+    };
+    const push = curve => {
+      const pts = curve.getPoints(SEG);
+      for (let i = 0; i < SEG; i++) {
+        const a = pts[i], b = pts[i + 1], o = fi * 6;
+        const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y), dz = Math.abs(b.z - a.z), m = Math.max(dx, dy, dz) || 1;
+        fp.set([a.x, a.y, a.z, b.x, b.y, b.z], o);
+        const r = dx / m, g = dz / m, bl = dy / m;
+        fc.set([r, g, bl, r, g, bl], o);
+        fi++;
+      }
+    };
+    for (let f = 0; f < NF; f++) {
+      const kind = Math.random(), side = Math.random() < 0.5 ? 1 : -1;
+      if (kind < 0.34) { // corpus callosum: joins homologous points of both hemispheres
+        const a = gray(1, 0.86); if (a.y < -0.15 || Math.abs(a.z) > 0.85) { f--; continue; }
+        const b = a.clone(); b.x = -b.x;
+        const mz = Math.max(-0.55, Math.min(0.58, a.z * 0.75));
+        const my = 0.13 + 0.07 * Math.cos(mz * 2.2);
+        push(new THREE.CatmullRomCurve3([a, new THREE.Vector3(0.22, (a.y + my) / 2, (a.z + mz) / 2), new THREE.Vector3(0, my, mz), new THREE.Vector3(-0.22, (a.y + my) / 2, (a.z + mz) / 2), b]));
+      } else if (kind < 0.64) { // corona radiata: brainstem → internal capsule → cortex
+        const a = gray(side, 0.86); if (a.y < 0.05) { f--; continue; }
+        push(new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.05, -0.62, -0.26),
+          new THREE.Vector3(side * 0.12, -0.32, -0.12),
+          new THREE.Vector3(side * 0.24, -0.02, 0.02 + (a.z * 0.15)),
+          new THREE.Vector3(side * (0.24 + (Math.abs(a.x) - 0.24) * 0.55), a.y * 0.6, a.z * 0.7),
+          a
+        ]));
+      } else { // association fibers inside one hemisphere
+        const a = gray(side, 0.88), b = gray(side, 0.88), d = a.distanceTo(b);
+        if (d < 0.25 || d > 1.3) { f--; continue; }
+        const c = a.clone().add(b).multiplyScalar(0.5);
+        c.lerp(new THREE.Vector3(side * (HX - 0.02), 0.0, c.z * 0.85), 0.45);
+        push(new THREE.QuadraticBezierCurve3(a, c, b));
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(fp.subarray(0, fi * 6), 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(fc.subarray(0, fi * 6), 3));
+    const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false });
+    _ADD_MATS.push(mat);
+    const lines = new THREE.LineSegments(geo, mat); lines.renderOrder = 1;
+    fiberGroup.add(lines);
+  }
+  const neurons = new THREE.Points(nGeo, nMat);
+  neurons.renderOrder = 2; brain.add(neurons);
+  _ADD_MATS.push(nMat);
+
+  /* ---- pulses: heads with a trail */
+  const ANCHOR = {
+    dlpfc: [0.62, 0.42, 0.40], apfc: [0.32, 0.14, 0.92], ofc: [0.42, -0.22, 0.68], atl: [0.76, -0.44, 0.05],
+    post: [0.52, 0.38, -0.62], hip: [0.31, -0.26, -0.12], amy: [0.31, -0.38, 0.30], tha: [0.11, -0.05, -0.12],
+    bg: [0.30, 0.02, 0.12], cb: [0.32, -0.52, -0.82], vta: [0, -0.48, -0.22], hypo: [0.12, -0.17, 0.01]
+  };
+  const TRAIL = 10, MAXS = 220;
+  const sPos = new Float32Array(MAXS * TRAIL * 3), sCol = new Float32Array(MAXS * TRAIL * 3), sSize = new Float32Array(MAXS * TRAIL);
+  const sGeo = new THREE.BufferGeometry();
+  sGeo.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
+  sGeo.setAttribute("color", new THREE.BufferAttribute(sCol, 3));
+  sGeo.setAttribute("aSize", new THREE.BufferAttribute(sSize, 1));
+  const sMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, vertexColors: true,
+    uniforms: { uPix: { value: renderer.getPixelRatio() } },
+    vertexShader: `attribute float aSize; uniform float uPix; varying vec3 vColor;
+      void main(){ vColor = color; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_PointSize = aSize * uPix * (3.2 / -mv.z); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying vec3 vColor; void main(){ float d = length(gl_PointCoord-0.5); if(d>0.5) discard; float a = pow(smoothstep(0.5,0.0,d),1.6); gl_FragColor = vec4(vColor*1.4, a); }`
+  });
+  const spikePts = new THREE.Points(sGeo, sMat); spikePts.renderOrder = 5; spikePts.frustumCulled = false; brain.add(spikePts);
+  _ADD_MATS.push(sMat);
+  let spikes = [];
+
+  function anchor(id, side) { const a = ANCHOR[id]; return new THREE.Vector3(a[0] * side, a[1], a[2]); }
+  function sendSpike(fromId, toId, delay, side) {
+    if (spikes.length >= MAXS) return;
+    const a = anchor(fromId, side), b = anchor(toId, side);
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    const lift = mid.clone().setY(mid.y + 0.25).normalize().multiplyScalar(a.distanceTo(b) * 0.28);
+    const curve = new THREE.QuadraticBezierCurve3(a, mid.add(lift), b);
+    spikes.push({ curve, t: -delay, dur: reduced ? 0.01 : 0.6 + Math.random() * 0.3, to: toId, side, color: regionColors[RI[fromId]] });
+  }
+  /* D2 — callosal (interhemispheric) echo: at ~450 ms the mirror point gets a fraction of the
+     intensity. Sign per region per the evidence (Mancuso et al. 2019): lateral PFC and motor
+     cortex have the LOWEST homotopic connectivity → interhemispheric inhibition (darkens);
+     subcortical and medial ones the HIGHEST → excitation. Fraction and delay are visual decisions. */
+  const ECHO_MS = 450;
+  const ECHO_OF = { dlpfc: -0.25, apfc: -0.20, ofc: -0.25, cb: -0.30, post: 0.15, atl: 0.10, amy: 0.20, hip: 0.25, tha: 0.30, bg: 0.30, vta: 0.35, hypo: 0.35 };
+  function callosalEcho(id, side) {
+    const f = ECHO_OF[id]; if (!f) return;
+    setTimeout(() => { try { activate(id, f, -side, true); } catch (_) {} }, ECHO_MS);
+  }
+  function activate(id, amt, side, isEcho) {
+    const n = byId[id];
+    if (side === undefined) side = Math.random() < 0.5 ? 1 : -1; // a pulse is born in ONE hemisphere
+    if (side >= 0) n.actP = Math.max(-0.35, Math.min(1.6, n.actP + amt));
+    else n.actM = Math.max(-0.35, Math.min(1.6, n.actM + amt));
+    n.act = (n.actP + n.actM) / 2; // average = hemodynamic response (BOLD): surface/EEG/inspector
+    n.kick = Math.min(2, n.kick + amt); spikeCount++;
+    if (!isEcho) callosalEcho(id, side); // only real activations trigger an echo (no cascades)
+  }
+  function setTheme3D() {
+    // the viewer is ALWAYS dark (additive tuned for that): only the theme clear color refreshes
+    renderer.setClearColor(new THREE.Color(cssv("--stage")), 1);
+  }
+  function runPath(path, side) {
+    if (side === undefined) side = Math.random() < 0.5 ? 1 : -1; // D2: the pulse is born and travels on ONE side
+    activate(path[0], 0.9, side);
+    for (let i = 0; i < path.length - 1; i++) sendSpike(path[i], path[i + 1], i * 0.65, side);
+  }
+
+  /* ---- etiquetas 3D */
+  const labelsEl = document.getElementById("labels");
+  const LABEL_AT = {
+    dlpfc: [0.70, 0.62, 0.38], apfc: [0.36, 0.22, 1.08], ofc: [0.50, -0.34, 0.72], atl: [0.98, -0.52, 0.02],
+    post: [0.62, 0.62, -0.66], hip: [0.36, -0.30, -0.12], amy: [0.34, -0.44, 0.34], tha: [0.12, 0.02, -0.12],
+    bg: [0.32, 0.12, 0.20], cb: [0.52, -0.62, -0.95], vta: [0.0, -1.05, -0.38], hypo: [0.16, -0.36, 0.14]
+  };
+  const lbls = IDS.map(id => {
+    const d = document.createElement("div"); d.className = "lbl";
+    labelsEl.appendChild(d); return { id, el: d };
+  });
+  const renderLabels = () => lbls.forEach(lb => { lb.el.innerHTML = `<i style="background:${byId[lb.id].color}"></i>${L(byId[lb.id].short)}`; });
+  let labelsOn = true;
+  const tmp = new THREE.Vector3();
+  function placeLabels() {
+    const w = host.clientWidth, h = host.clientHeight;
+    for (const lb of lbls) {
+      if (!labelsOn) { lb.el.style.opacity = 0; continue; }
+      const a = LABEL_AT[lb.id];
+      const right = new THREE.Vector3(a[0], a[1], a[2]).applyMatrix4(brain.matrixWorld);
+      const left = new THREE.Vector3(-a[0], a[1], a[2]).applyMatrix4(brain.matrixWorld);
+      const p = right.distanceTo(camera.position) < left.distanceTo(camera.position) ? right : left;
+      tmp.copy(p).project(camera);
+      lb.el.style.left = ((tmp.x + 1) / 2 * w) + "px";
+      lb.el.style.top = ((1 - tmp.y) / 2 * h) + "px";
+      const deep = ["hip", "amy", "tha", "bg", "hypo"].includes(lb.id);
+      let o = deep ? (cortexMat.opacity < 0.75 ? 0.95 : 0.35) : 1;
+      if (focus >= 0 && RI[lb.id] !== focus) o *= 0.25;
+      lb.el.style.opacity = o;
+    }
+  }
+
+  /* ---- live color of the cortex */
+  const mult = new Float32Array(11);
+  function updateCortex() {
+    for (let r = 0; r < 11; r++) {
+      const n = byId[IDS[r]];
+      mult[r] = (focus < 0 || focus === r ? 1 : 0.18) * (1 + n.act * 1.1);
+    }
+    for (const S of surf) {
+      const col = S.geo.attributes.color.array, base = S.base, reg = S.reg;
+      for (let i = 0, n = reg.length; i < n; i++) {
+        const m = mult[reg[i]], j = i * 3;
+        col[j] = base[j] * m; col[j + 1] = base[j + 1] * m; col[j + 2] = base[j + 2] * m;
+      }
+      S.geo.attributes.color.needsUpdate = true;
+    }
+    for (const id in solidMats) {
+      const r = RI[id], n = byId[id];
+      for (const m of solidMats[id]) {
+        m.emissiveIntensity = (0.1 + n.act * 0.9) * (focus < 0 || focus === r ? 1 : 0.15);
+        m.color.copy(regionColors[r]).multiplyScalar(focus < 0 || focus === r ? 0.8 : 0.18);
+      }
+    }
+  }
+
+  /* ---- click on a region */
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener("pointerup", e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    mouse.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const objs = cortexMat.opacity > 0.05 ? [...cortexMeshes, ...pickables] : pickables;
+    const hit = ray.intersectObjects(objs, false)[0];
+    if (!hit) return;
+    let ri = hit.object.userData.ri;
+    if (ri === undefined) ri = surf[hit.object.userData.surf].reg[hit.face.a];
+    select(IDS[ri]); activate(IDS[ri], 0.8);
+  });
+
+  function resize() {
+    const w = host.clientWidth, h = host.clientHeight;
+    if (!w || !h) return; // another workspace may be open when the page is loaded
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+
+  /* ================= EEG ================= */
+  const ev = document.getElementById("eeg"), ectx = ev.getContext("2d");
+  const CH = [...NODES].sort((a, b) => b.order - a.order);
+  const BAND_EEG = BAND; // defined next to IDS — hierarchy shared by EEG/shader
+  let eW = 0, eH = 0, edpr = 1, buffers = {}, ripple = 0, eegT = 0, eegAcc = 0;
+  function eegResize() {
+    edpr = Math.min(devicePixelRatio || 1, 2); eW = ev.clientWidth; eH = ev.clientHeight;
+    ev.width = Math.round(eW * edpr); ev.height = Math.round(eH * edpr);
+    const len = Math.max(10, Math.floor(eW - 110));
+    CH.forEach(n => { const old = buffers[n.id] || []; buffers[n.id] = Array.from({ length: len }, (_, i) => old[old.length - len + i] || 0); });
+  }
+  function eegStep(dt) {
+    eegAcc += dt * (reduced ? 40 : 90);
+    while (eegAcc >= 1) {
+      eegAcc -= 1; eegT += 1 / 90;
+      for (const n of CH) {
+        const f = BAND[n.id], ph = RI[n.id];
+        let v = 0.18 * Math.sin(eegT * f * 1.57 + ph) + 0.1 * Math.sin(eegT * f * 0.7 + ph * 2) + (Math.random() - 0.5) * 0.14;
+        v += n.kick * 0.55 * Math.sin(eegT * 60 + ph) * Math.random();
+        if (ripple > 0 && (n.id === "hip" || n.id === "tha" || n.id === "post")) v += ripple * 0.7 * Math.sin(eegT * 160);
+        n.kick *= 0.965;
+        const b = buffers[n.id]; b.push(v); b.shift();
+      }
+      ripple *= 0.985;
+    }
+  }
+  function eegDraw() {
+    ectx.setTransform(edpr, 0, 0, edpr, 0, 0); ectx.clearRect(0, 0, eW, eH);
+    const rowH = (eH - 16) / CH.length, x0 = 100, muted = cssv("--muted");
+    ectx.font = '500 11px "IBM Plex Mono", monospace'; ectx.textBaseline = "middle";
+    const pxPerSec = reduced ? 40 : 90;
+    ectx.globalAlpha = 0.18; ectx.fillStyle = muted;
+    for (let s = 0; s * pxPerSec < eW - x0 - 8; s++) ectx.fillRect(eW - 8 - s * pxPerSec, 8, 1, eH - 16);
+    ectx.globalAlpha = 1;
+    CH.forEach((n, i) => {
+      const yc = 8 + rowH * (i + 0.5);
+      ectx.fillStyle = n.color; ectx.fillRect(14, yc - 4, 8, 8);
+      ectx.fillStyle = muted; ectx.textAlign = "left"; ectx.fillText(L(n.short), 30, yc);
+      const b = buffers[n.id]; if (!b) return;
+      ectx.strokeStyle = n.color; ectx.lineWidth = 1.2; ectx.beginPath();
+      for (let k = 0; k < b.length; k++) {
+        const y = yc - Math.max(-1.4, Math.min(1.4, b[k])) * rowH * 0.36;
+        k ? ectx.lineTo(x0 + k, y) : ectx.moveTo(x0 + k, y);
+      }
+      ectx.stroke();
+    });
+  }
+
+  /* ================= Log (re-rendered on language switch) ================= */
+  const logEl = document.getElementById("log");
+  const entries = [];
+  const fmt = d => d.toLocaleTimeString(lang, { hour12: false });
+  // text and tag: string, {en, es} or an i18n key wrapped as {key}
+  const resolve = v => (v && v.key ? t(v.key) : L(v));
+  // consecutive repeats of the same pulse (the 7 s thinking heartbeat) fold into one row with
+  // ×N, so the log reads as events instead of a ticker
+  const sameText = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // salience (Menon & Uddin 2010): what deserves attention on its own — the human, surprises, the
+  // guards, what was learned or committed, the agent's own words. The rest is activity: shown
+  // only in the "all" view, where the thinking heartbeat is one live row and self-generated
+  // echoes (an `origin`) recede. The choice is a per-viewer convenience, remembered locally.
+  const HOT = new Set(["human", "error", "guard", "lesson", "commit", "memory", "a2a", "compact", "forget", "replay"]);
+  const LOG_MAX = 120, LOG_SHOWN = 40;
+  let logFilter = "salient";
+  try { if (localStorage.getItem("brainLogFilter") === "all") logFilter = "all"; } catch (_) {}
+  const shown = e => logFilter === "all" || e.hot || e.kind === undefined; // simulated pulses carry no kind
+  function renderLog() {
+    logEl.innerHTML = entries.filter(shown).slice(0, LOG_SHOWN).map(e => {
+      const tag = e.tag ? ` <em>${resolve(e.tag)}</em>` : "";
+      // who generated a self-made pulse (a fixed loop, a hook or a custom agent's own name):
+      // an identifier by ident() below, safe as markup
+      const org = e.origin ? `<em class="org">${e.origin}</em>` : "";
+      const rep = e.n > 1 ? `<span class="rep">×${e.n}</span>` : "<span></span>";
+      const cls = [e.hot ? "hot" : "", e.origin ? "dim" : "", e.kind === "think" ? "beat" : ""].filter(Boolean).join(" ");
+      return `<li class="${cls}" data-kind="${e.kind || ""}"><time>${fmt(e.time)}</time><span class="sw" style="background:${byId[e.id].color}"></span><span class="tx">${org}${resolve(e.text)}${tag}</span>${rep}</li>`;
+    }).join("");
+  }
+  // a kind or origin from the bus lands in markup (data-kind) and in decisions: identifiers only
+  const ident = v => (typeof v === "string" && /^[a-z0-9_-]{1,32}$/i.test(v) ? v : undefined);
+  function log(id, text, tag, meta) {
+    const raw = meta || {};
+    const m = { kind: ident(raw.kind), origin: ident(raw.origin), tag: ident(raw.tag) };
+    const top = entries[0];
+    // the 7 s thinking heartbeat folds into ONE live row whatever its topic says; any other
+    // identical consecutive pulse folds too — never across origins: a custom agent's or a hook's
+    // pulse would land in the human session's row under its label
+    const same = top && top.id === id && (top.origin || "") === (m.origin || "");
+    const beat = same && m.kind === "think" && top.kind === "think";
+    if (beat || (same && sameText(top.text, text) && sameText(top.tag, tag))) {
+      top.n = (top.n || 1) + 1;
+      top.time = new Date();
+      if (beat) top.text = text;
+    } else {
+      const hot = !!(m.kind && (HOT.has(m.kind) || m.tag === "consolidate"));
+      entries.unshift({ id, text, tag, time: new Date(), n: 1, kind: m.kind, origin: m.origin, hot });
+      if (entries.length > LOG_MAX) entries.pop();
+    }
+    renderLog();
+  }
+  const logFilterEl = document.getElementById("logFilter");
+  const paintFilter = () => logFilterEl.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.filter === logFilter)));
+  logFilterEl.addEventListener("click", ev => {
+    const b = ev.target.closest("button[data-filter]");
+    if (!b) return;
+    logFilter = b.dataset.filter;
+    try { localStorage.setItem("brainLogFilter", logFilter); } catch (_) {}
+    paintFilter();
+    renderLog();
+  });
+  paintFilter();
+
+  /* ================= Simulated events, replay, clock ================= */
+  function pick() { let r = Math.random() * W_TOTAL; for (const e of EVENTS) { if ((r -= e.w) <= 0) return e; } return EVENTS[0]; }
+  let nextEventIn = 1.0;
+  function simTick(dt) {
+    if (live) return;
+    nextEventIn -= dt;
+    if (nextEventIn <= 0) {
+      const e = pick();
+      if (!e) { nextEventIn = 2; return; } // no events loaded (real-only mode): nothing to simulate
+      runPath(e.path); log(e.path[e.path.length - 1], e.text());
+      nextEventIn = 0.8 + Math.random() * 2.0;
+    }
+  }
+  function replay(text, preview = false) {
+    ripple = 1.6; activate("hip", 1.2);
+    [1, -1].forEach(s => {
+      for (let i = 0; i < 4; i++) {
+        sendSpike("hip", "tha", i * 0.16, s);
+        sendSpike("tha", i % 2 ? "post" : "atl", 0.65 + i * 0.16, s);
+      }
+    });
+    if (!preview) log("tha", text || { key: "logReplay" }, "cron */15");
+  }
+  function reindex() {
+    [1, -1].forEach(s => { sendSpike("tha", "post", 0, s); sendSpike("tha", "atl", 0.2, s); });
+    log("atl", { key: "logReindex" }, { key: "every30" });
+  }
+  let lastQuarter = null, lastUtcDay = new Date().getUTCDate();
+  const pad = n => String(n).padStart(2, "0");
+  function clockTick() {
+    const d = new Date();
+    document.getElementById("clock").textContent = fmt(d);
+    const q = Math.floor(d.getMinutes() / 15);
+    const next = new Date(d); next.setSeconds(0, 0); next.setMinutes((q + 1) * 15);
+    const left = Math.max(0, Math.round((next - d) / 1000));
+    document.getElementById("nextReplay").textContent = `${pad(Math.floor(left / 60))}:${pad(left % 60)}`;
+    const ul = Math.round((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1) - d) / 1000);
+    document.getElementById("utcRoll").textContent = `${pad(Math.floor(ul / 3600))}:${pad(Math.floor(ul / 60) % 60)}:${pad(ul % 60)}`;
+    // long rhythms: circadian (~24 h, day/night by local time) and ultradian (~90 min, like the sleep cycle)
+    const mins = d.getHours() * 60 + d.getMinutes();
+    document.getElementById("circ").textContent = Math.round(mins / 1440 * 100) + "% · " + (d.getHours() >= 6 && d.getHours() < 18 ? t("day") : t("night"));
+    document.getElementById("ultra").textContent = Math.round(mins % 90 / 90 * 100) + "%";
+    const key = d.getHours() * 4 + q;
+    // A wall-clock boundary is not evidence of a real replay or index update.
+    lastQuarter = key;
+    if (d.getUTCDate() !== lastUtcDay) lastUtcDay = d.getUTCDate();
+    document.getElementById("spikeCount").textContent = spikeCount.toLocaleString(lang);
+  }
+
+  /* ---- optional live mode: open the file locally with ?ws=ws://127.0.0.1:8765 */
+  function renderMode() {
+    document.getElementById("modeDot").classList.toggle("live", live);
+    document.getElementById("modeLabel").textContent = t(live ? "live" : "simulation");
+    document.getElementById("logMode").textContent = t(live ? "realEvents" : "simulated");
+  }
+  function setMode(isLive) { live = isLive; renderMode(); }
+  const esc = s => String(s).replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+  // real event: {path:[...], text:"..." | {en,es}, ref:"..."} or {kind:"replay"}
+  function ingest(evt) {
+    if (!evt || typeof evt !== "object") return;
+    const clean = v => (v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, s]) => [k, esc(s)])) : esc(v || ""));
+    if (evt.kind === "replay") { replay(evt.text ? clean(evt.text) : null); return; }
+    const path = Array.isArray(evt.path) ? evt.path.filter(id => byId[id]) : (byId[evt.region] ? [evt.region] : []);
+    if (!path.length) return;
+    touchReal(); // a real feed event: it suppresses the default network
+    // D3 — the server decided the side (HERA, Tulving 1994: encoding→left, retrieval→right;
+    // language→left). L = the agent's LEFT hemisphere = x>=0 (the atlas faces the
+    // camera). "both" = RESERVED bilateral (critical guard, forgetting): all lit must mean something.
+    if (evt.side === "both") { runPath(path, 1); runPath(path, -1); }
+    else runPath(path, evt.side === "L" ? 1 : evt.side === "R" ? -1 : undefined);
+    log(path[path.length - 1], clean(evt.text || evt.kind || "event"), evt.ref ? esc(evt.ref) : "", evt.meta || {});
+  }
+  window.agentBrain = { ingest, regions: IDS.slice() };
+  try {
+    const wsUrl = new URLSearchParams(location.search).get("ws");
+    if (wsUrl) {
+      const ws = new WebSocket(wsUrl);
+      ws.onopen = () => setMode(true);
+      ws.onmessage = m => { try { ingest(JSON.parse(m.data)); } catch (_) {} };
+      ws.onclose = () => setMode(false);
+    }
+  } catch (_) { /* no network: it stays in simulation */ }
+
+  /* ================= UI: inspector, legend, plates ================= */
+  const insp = document.getElementById("inspector");
+  let inspectorKey = "";
+  function renderInspector() {
+    const n = byId[selected];
+    const key = selected + ":" + lang;
+    if (inspectorKey === key) {
+      const state = insp.querySelector(".state");
+      state.innerHTML = L(n.state); state.dataset.status = n.status;
+      insp.querySelector(".region-trace").innerHTML = L(n.trace);
+      insp.querySelector(".pulse-proof").innerHTML = pulseEvidence(n);
+      return; // refresh evidence without closing details or stealing keyboard focus
+    }
+    inspectorKey = key;
+    insp.innerHTML = `
+      <div class="eyebrow proc"><span class="sw" style="background:${n.color}"></span>${L(n.proc)}</div>
+      <h2>${L(n.name)}</h2>
+      <span class="state" data-status="${n.status}">${L(n.state)}</span>
+      <p class="region-implementation">${esc(L(n.impl))}</p>
+      <dl class="kv">
+        <dt>${t("trace")}</dt><dd class="region-trace source-note">${L(n.trace)}</dd>
+        <dt>${t("pulseLabel")}</dt><dd class="pulse-proof source-note">${pulseEvidence(n)}</dd>
+      </dl>
+      <details class="region-note"><summary>${t("neuroNote")}</summary><p>${L(n.neuro)}</p>
+        <dl class="kv"><dt>${t("compartment")}</dt><dd>${t("c_" + COMPART_OF[n.id])} · ${billions(CENSUS.find(c => c.k === COMPART_OF[n.id]).n)}</dd>
+        <dt>${t("band")}</dt><dd>${BAND_OF(n.id)}</dd></dl>
+      </details>`;
+  }
+  const ordered = [...NODES].sort((a, b) => a.order - b.order);
+  const legend = document.getElementById("legend");
+  const legendBtns = {};
+  ordered.forEach(n => {
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.region = n.id;
+    b.setAttribute("aria-controls", "inspector");
+    b.addEventListener("click", () => { focus = RI[n.id]; select(n.id); syncLegend(); });
+    legend.appendChild(b); legendBtns[n.id] = b;
+  });
+  const renderLegend = () => ordered.forEach(n => {
+    const button = legendBtns[n.id];
+    button.innerHTML = `<span class="sw" style="background:${n.color}"></span><span class="region-label"><b>${L(n.short)}</b><span>${L(n.name)}</span></span>`;
+    button.setAttribute("aria-label", L(n.name)); button.title = L(n.proc);
+    button.setAttribute("aria-pressed", String(n.id === selected));
+  });
+  function syncLegend() { IDS.forEach(id => legendBtns[id].setAttribute("aria-pressed", String(selected === id))); nMat.uniforms.uFocus.value = focus; }
+  function select(id) {
+    if (!byId[id]) return;
+    selected = id; renderInspector();
+    syncLegend();
+    const url = new URL(location.href); url.searchParams.set("region", id);
+    history.replaceState(null, "", url);
+  }
+
+  function refreshRegionViews() {
+    renderInspector();
+  }
+  function pulseEvidence(n) {
+    if (!n.lastPulse) return esc(t("noPulse"));
+    return esc(t("pulseLabel") + ": " + n.lastPulse.kind + " · " +
+      new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(n.lastPulse.ts)));
+  }
+  let pulseEvidenceTimer = null;
+  function observePulse(ev) {
+    if (!ev || !Array.isArray(ev.path) || !Number.isFinite(Date.parse(ev.ts))) return;
+    ev.path.forEach(id => { if (byId[id]) byId[id].lastPulse = { kind: ident(ev.kind) || "event", ts: ev.ts }; });
+    // A burst updates evidence once, without replacing the cards or flooding the live region.
+    if (pulseEvidenceTimer === null) pulseEvidenceTimer = setTimeout(() => {
+      pulseEvidenceTimer = null; refreshRegionViews();
+    }, 250);
+  }
+
+  document.getElementById("opacity").addEventListener("input", e => {
+    const v = e.target.value / 100; cortexMat.opacity = v; cortexMeshes.forEach(m => { m.visible = v > 0.01; });
+  });
+  let rotateOn = !reduced;
+  const bRot = document.getElementById("btnRotate");
+  bRot.setAttribute("aria-pressed", String(rotateOn));
+  bRot.addEventListener("click", () => { rotateOn = !rotateOn; controls.autoRotate = rotateOn; bRot.setAttribute("aria-pressed", String(rotateOn)); });
+  const bLab = document.getElementById("btnLabels");
+  bLab.addEventListener("click", () => { labelsOn = !labelsOn; bLab.setAttribute("aria-pressed", String(labelsOn)); });
+  const bFib = document.getElementById("btnFibers");
+  bFib.addEventListener("click", () => { fiberGroup.visible = !fiberGroup.visible; bFib.setAttribute("aria-pressed", String(fiberGroup.visible)); });
+  document.getElementById("btnAll").addEventListener("click", () => { focus = -1; syncLegend(); });
+  document.getElementById("btnFire").addEventListener("click", () => {
+    const outs = TRACTS.filter(tr => tr[0] === selected).map(tr => tr[1]);
+    activate(selected, 1);
+    [1, -1].forEach(s => outs.forEach((o, i) => sendSpike(selected, o, i * 0.15, s)));
+    // This preview is deliberately not inserted into the real event log.
+  });
+  document.getElementById("btnReplay").addEventListener("click", () => replay({ key: "logReplayManual" }, true));
+  const bp = document.getElementById("btnPause");
+  const renderPause = () => {
+    bp.innerHTML = ic(paused ? "play" : "pause", "sm") + "<span>" + t(paused ? "resume" : "pause") + "</span>";
+    bp.setAttribute("aria-pressed", String(paused));
+  };
+  bp.addEventListener("click", () => { paused = !paused; renderPause(); });
+
+  /* ================= Aplicar idioma ================= */
+  function applyLang(next) {
+    if (!I18N[next]) return;
+    lang = next;
+    try { localStorage.setItem("brain-lang", lang); } catch (_) {}
+    document.documentElement.lang = lang;
+    document.title = t("title");
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = t(el.dataset.i18nTitle); });
+    document.querySelectorAll("[data-i18n-aria]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
+    document.querySelectorAll('.lang button[data-lang]').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+    host.setAttribute("aria-label", t("glLabel"));
+    setNeuronCount(NCOUNT);
+    renderMode(); renderPause(); renderInspector(); renderLegend(); renderLabels(); renderLog(); renderCensus(); clockTick(); renderVitals();
+    window.dispatchEvent(new Event("brain:language"));
+  }
+  document.querySelectorAll('.lang button[data-lang]').forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
+
+  /* manual light/dark theme — persisted in localStorage; with no saved preference it follows the OS */
+  const applyTheme = t => {
+    if (t === "dark" || t === "light") { document.documentElement.dataset.theme = t; localStorage.setItem("brainTheme", t); }
+    else { delete document.documentElement.dataset.theme; localStorage.removeItem("brainTheme"); }
+    const cur = document.documentElement.dataset.theme || "";
+    document.querySelectorAll('.lang button[data-theme]').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.theme === cur)));
+    try { window.__BRAIN && window.__BRAIN.setTheme3D && window.__BRAIN.setTheme3D(); } catch (_) { /* 3D best-effort */ }
+  };
+  document.querySelectorAll('.lang button[data-theme]').forEach(b => b.addEventListener("click", () => applyTheme(b.dataset.theme)));
+  applyTheme(localStorage.getItem("brainTheme"));
+
+  const requestedRegion = new URLSearchParams(location.search).get("region");
+  if (byId[requestedRegion]) { selected = requestedRegion; focus = RI[selected]; syncLegend(); }
+
+  /* ================= Bucle ================= */
+  let last = performance.now(), simTime = 0;
+  const scaleBarEl = document.querySelector("#scaleBar i");
+  const SCALE_UNITS = 2 * 2.1 / 16.7; // 2 cm in model units
+  let lastScaleAt = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!paused) {
+      simTime += dt;
+      simTick(dt); if (ev.clientHeight) eegStep(dt);
+      NODES.forEach(n => { const k = Math.exp(-dt * 1.3); n.actP *= k; n.actM *= k; n.act = (n.actP + n.actM) / 2; });
+      const keep = [];
+      for (const s of spikes) {
+        s.t += dt / s.dur;
+        if (s.t >= 1) { activate(s.to, 0.85, s.side); continue; }
+        keep.push(s);
+      }
+      spikes = keep;
+    }
+    let k = 0;
+    for (const s of spikes) {
+      for (let j = 0; j < TRAIL; j++) {
+        const tt = s.t - j * 0.03;
+        const o = (k * TRAIL + j);
+        if (s.t < 0 || tt < 0) { sSize[o] = 0; continue; }
+        const p = s.curve.getPoint(Math.min(1, tt));
+        sPos[o * 3] = p.x; sPos[o * 3 + 1] = p.y; sPos[o * 3 + 2] = p.z;
+        const f = 1 - j / TRAIL;
+        sCol[o * 3] = s.color.r * f; sCol[o * 3 + 1] = s.color.g * f; sCol[o * 3 + 2] = s.color.b * f;
+        sSize[o] = j === 0 ? 11 : 7 * f;
+      }
+      k++;
+    }
+    sGeo.setDrawRange(0, k * TRAIL);
+    sGeo.attributes.position.needsUpdate = true; sGeo.attributes.color.needsUpdate = true; sGeo.attributes.aSize.needsUpdate = true;
+
+    const acts = nMat.uniforms.uAct.value;
+    IDS.forEach((id, i) => { const n = byId[id]; acts[i * 2] = n.actP; acts[i * 2 + 1] = n.actM; }); // [i*2]=x≥0 · [i*2+1]=x<0 — same order as the shader
+    nMat.uniforms.uTime.value = simTime;
+    /* phase A: breathing 15/min (wave -1..1 · inspiration = the first 40% of the cycle) and
+       rest = clamp((real inactivity − 15 s) / 30 s) — only real events reset it */
+    const nowMs = performance.now();
+    const bph = (nowMs / 1000 % BREATH_S) / BREATH_S;
+    nMat.uniforms.uBreath.value = Math.sin(bph * Math.PI * 2);
+    nMat.uniforms.uInsp.value = bph < 0.4 ? Math.sin(bph / 0.4 * Math.PI) : 0;
+    nMat.uniforms.uRest.value = Math.max(0, Math.min(1, ((nowMs - lastRealTs) / 1000 - 15) / 30));
+    if (typeof vitBreathEl !== "undefined" && vitBreathEl) vitBreathEl.style.transform = "scale(" + (0.75 + 0.5 * (0.5 + 0.5 * nMat.uniforms.uBreath.value)).toFixed(3) + ")";
+    if (typeof lastVitalsText !== "undefined" && nowMs - lastVitalsText > 500) {
+      lastVitalsText = nowMs;
+      const on = nMat.uniforms.uRest.value > 0.5;
+      if (on !== vitRestState) { vitRestState = on; renderVitals(); }
+    }
+    // Hidden views keep draining real pulses, but spend nothing on geometry or GPU rendering.
+    if (document.hidden || document.getElementById("live").hidden) {
+      requestAnimationFrame(frame); return;
+    }
+    updateCortex();
+    controls.update();
+    // live scale bar: 2 cm of a real brain (≈16.7 cm long; the model is ≈2.1 units) measured on
+    // screen along the camera's right vector, so it follows zoom, rotation and resizes
+    if (scaleBarEl && now - lastScaleAt > 300) {
+      lastScaleAt = now;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+      const a = controls.target.clone().project(camera);
+      const b = controls.target.clone().add(right.multiplyScalar(SCALE_UNITS)).project(camera);
+      const px = Math.abs(b.x - a.x) * renderer.domElement.clientWidth / 2;
+      if (px > 4 && px < 400) scaleBarEl.style.width = px.toFixed(1) + "px";
+    }
+    renderer.render(scene, camera);
+    placeLabels();
+    if (ev.clientHeight) eegDraw();
+    requestAnimationFrame(frame);
+  }
+  function onResize() { resize(); eegResize(); }
+  addEventListener("resize", onResize);
+  addEventListener("brain:view", onResize);
+  document.getElementById("instrument").addEventListener("toggle", onResize);
+  document.getElementById("loading").remove();
+  /* viewer vitals: a breathing dot (15/min) + the state of the default network */
+  const vitalsEl = document.createElement("div"); vitalsEl.className = "vitals";
+  vitalsEl.innerHTML = '<span class="vit-b"><i id="vitBreath"></i><span data-i18n="vitRate"></span></span><span class="vit-d" id="vitRest"></span><span class="vit-n" id="vitNight"></span>';
+  document.getElementById("gl").appendChild(vitalsEl);
+  const vitBreathEl = document.getElementById("vitBreath"), vitRestEl = document.getElementById("vitRest");
+  let vitRestState = false, lastVitalsText = 0;
+  function renderVitals() { if (!vitRestEl) return; vitRestEl.textContent = t(vitRestState ? "vitRestOn" : "vitRestOff"); vitRestEl.classList.toggle("on", vitRestState); }
+  applyLang(lang);
+  onResize(); setInterval(clockTick, 1000);
+  log("post", { key: "logStart" }, { key: "start" });
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="live.js"></script><!-- the live layer: real events and the evidence of each region -->
+
+</body></html>

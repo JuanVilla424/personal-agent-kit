@@ -26,6 +26,7 @@ bash bin/install.sh
 
 The default is a core install: Claude Code, the guards and hooks, a local Qdrant and the
 `memory_service` (systemd, `:7700`). Each optional part is asked about when there is a terminal.
+Once it is running, the brain page is at `http://localhost:7700/brain/`.
 
 ## 🔇 Without Prompts
 

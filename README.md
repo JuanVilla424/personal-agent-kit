@@ -177,6 +177,9 @@ in `SLACK_CHANNEL_IDS`, and nobody while either is empty.
      autonomous worker, which runs it in a container and returns a reviewed patch, never a commit.
    - `pak snapshot list` and `pak snapshot restore <id>` bring back a copy of the repository from
      before a session or a challenge.
+   - The brain page, `http://localhost:7700/brain/` (the port is `MEMORY_SERVICE_PORT`), draws
+     every move of a session as a pulse on a 3D brain and shows the evidence behind each region.
+     It is served to this machine only; from anywhere else, reach it through an SSH tunnel.
 
 2. **Open in the AI tool**
    - Open the `personal-agent-kit` directory in Claude Code or OpenCode.

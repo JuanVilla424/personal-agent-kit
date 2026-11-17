@@ -1,8 +1,10 @@
 ---
 # .pre-commit-config.yaml
 
+# local/brain-ui/vendor: third-party files kept byte for byte as published (three.js r128 is
+# 590 KB, over the added-file limit, and the whitespace fixers would change its bytes)
 exclude: >-
-  ^(node_modules|logs|\.venv|venv|bmad-src|bmad-custom-src|\.bmad|\.claude|temp)/
+  ^(node_modules|logs|\.venv|venv|bmad-src|bmad-custom-src|\.bmad|\.claude|temp|local/brain-ui/vendor)/
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

@@ -39,6 +39,8 @@ from qdrant_client.models import (  # noqa: E402
     VectorParams,
 )
 
+import brain_page  # noqa: E402
+import brain_bus  # noqa: E402
 import memory_core as core  # noqa: E402
 from security import injection_guard  # noqa: E402
 
@@ -335,6 +337,9 @@ def add(req: AddReq, x_memory_token: str = Header("")):
     )
     _counters["writes"] += 1
     _push_metrics()
+    # the brain page: encoding, on the left. What was saved stays out of the bus
+    kept = f"{payload['category']} · {scope}"
+    brain_bus.emit("memory", f"memory saved · {kept}", ["hip", "atl"], side="L")
     return {"id": mid, **payload, "replaced": replaced}
 
 
@@ -384,6 +389,11 @@ def search(
     if fused:
         _counters["hits"] += 1
     _push_metrics()
+    # the brain page: retrieval, on the right. The query is shown masked
+    asked = brain_bus.mask(q)
+    brain_bus.emit(
+        "recall", f"memory search · {asked} · {len(fused)} found", ["atl", "hip"], side="R"
+    )
     return {"results": [_public(*by_id[doc_id], score=score) for doc_id, score in fused]}
 
 
@@ -427,6 +437,7 @@ def consolidate(threshold: float = CONSOLIDATE_THRESHOLD, x_memory_token: str = 
                 )
                 done.add(str(near.id))
                 merged.append({"replaced": str(near.id), "by": str(point.id)})
+    brain_page.note_night(len(merged))  # the brain page: the evidence of the night cycle
     return {"merged": len(merged), "pairs": merged}
 
 
@@ -471,6 +482,7 @@ def forget(req: ForgetReq, x_memory_token: str = Header("")):
         raise HTTPException(status_code=403, detail="not your memory")
     client.delete(collection_name=coll, points_selector=[req.id])
     _push_metrics()
+    brain_bus.emit("forget", "memory forgotten", ["vta"])
     return {"forgotten": req.id}
 
 
@@ -496,6 +508,9 @@ def health():
         }
     except Exception as e:
         return {"status": "degraded", "error": str(e)[:160]}
+
+
+brain_page.mount(app, health)  # the brain page: /brain and /api/brain/*
 
 
 if __name__ == "__main__":

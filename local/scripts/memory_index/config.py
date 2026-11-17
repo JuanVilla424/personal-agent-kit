@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(REPO_ROOT / ".env", override=False)
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
-QDRANT_PORT = int(os.getenv("QDRANT_PORT", "7633"))
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", "7733"))
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "runbooks")
 # Optional remote Qdrant: api key + TLS. Empty / false → local Qdrant on 127.0.0.1 (no auth).
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")

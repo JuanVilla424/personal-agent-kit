@@ -529,7 +529,7 @@ setup_hooks() {
 }
 
 # render_placeholders FILE → prints FILE for this user and this checkout. The repo's templates
-# (.env.template, *.service) carry <user>, /home/<user> and <opencode-bin> placeholders.
+# (.env.example, *.service) carry <user>, /home/<user> and <opencode-bin> placeholders.
 render_placeholders() {
     local claude_bin
     claude_bin="$(command -v claude 2>/dev/null || true)"
@@ -555,7 +555,7 @@ setup_slack() {
     if [ -f "$dir/.env" ]; then
         ok "$SLACK_DIR_REL/.env already exists — no changes"
     else
-        (umask 077 && render_placeholders "$dir/.env.template" > "$dir/.env") && ok "$SLACK_DIR_REL/.env created (private)"
+        (umask 077 && render_placeholders "$dir/.env.example" > "$dir/.env") && ok "$SLACK_DIR_REL/.env created (private)"
     fi
     for unit in "$dir"/agent-bot*.service "$dir"/agent-bot*.timer; do
         install_unit "$unit"
@@ -570,14 +570,14 @@ setup_slack() {
     fi
 }
 
-# .env — the single config file (see .env.template). Created once and never overwritten; owner-only
+# .env — the single config file (see .env.example). Created once and never overwritten; owner-only
 # because it holds the local tokens.
 setup_env_file() {
     local env_file="$REPO_ROOT/.env"
     if [ -f "$env_file" ]; then
         ok ".env already exists — no changes"
     else
-        render_placeholders "$REPO_ROOT/.env.template" > "$env_file" && ok ".env created from .env.template"
+        render_placeholders "$REPO_ROOT/.env.example" > "$env_file" && ok ".env created from .env.example"
     fi
     chmod 600 "$env_file"
 }
@@ -682,19 +682,20 @@ setup_local_qdrant() {
     install_tool_deps "local/scripts/memory_index/requirements.txt"
 }
 
-# brain_ports → QDRANT_PORT and MEMSVC_PORT from the root .env (7633 and 7700 when unset), and the
-# names of this checkout's Qdrant. On the default port they are the ones every install has had;
-# on any other port they carry it, so two kits on one machine never share a container or a volume.
+# brain_ports → QDRANT_PORT and MEMSVC_PORT from the root .env (7733 and 7800 when unset: the
+# kit's own ports, the same on every machine), and the names of this checkout's Qdrant, which
+# carry its port so two kits on one machine never share a container or a volume. An install
+# still on 7633, the port of the first versions, keeps the names it was created with.
 brain_ports() {
     QDRANT_PORT="$(env_value QDRANT_PORT)"
-    QDRANT_PORT="${QDRANT_PORT:-7633}"
+    QDRANT_PORT="${QDRANT_PORT:-7733}"
     MEMSVC_PORT="$(env_value MEMORY_SERVICE_PORT)"
-    MEMSVC_PORT="${MEMSVC_PORT:-7700}"
-    QDRANT_CONTAINER="memory-qdrant"
-    QDRANT_PROJECT="memory_index"
-    if [ "$QDRANT_PORT" != "7633" ]; then
-        QDRANT_CONTAINER="memory-qdrant-$QDRANT_PORT"
-        QDRANT_PROJECT="memory_index_$QDRANT_PORT"
+    MEMSVC_PORT="${MEMSVC_PORT:-7800}"
+    QDRANT_CONTAINER="memory-qdrant-$QDRANT_PORT"
+    QDRANT_PROJECT="memory_index_$QDRANT_PORT"
+    if [ "$QDRANT_PORT" = "7633" ]; then
+        QDRANT_CONTAINER="memory-qdrant"
+        QDRANT_PROJECT="memory_index"
     fi
 }
 
@@ -1003,7 +1004,7 @@ urllib.request.urlopen(whoami, timeout=5).close()
 }
 
 # wait_memory_service → 0 once this kit's service answers on its port (MEMORY_SERVICE_PORT in
-# .env, 7700 by default).
+# .env, 7800 by default).
 wait_memory_service() {
     local _
     brain_ports

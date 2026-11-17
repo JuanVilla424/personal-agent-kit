@@ -32,7 +32,7 @@ get_env() {
     echo "${v}"
 }
 QPORT="$(get_env QDRANT_PORT)"
-QPORT="${QPORT:-7633}"
+QPORT="${QPORT:-7733}"
 # The local Qdrant may require an API key. The key reaches curl on stdin (printf is a
 # builtin), never in argv: other users of a shared host can read every process's arguments.
 QKEY="$(get_env QDRANT_API_KEY)"
@@ -79,7 +79,7 @@ done
 #    one's, and its memories are not this kit's. The token is the proof, and it reaches curl on
 #    stdin like the Qdrant key.
 svc_url="$(get_env MEMORY_SERVICE_URL)"
-svc_url="${svc_url:-http://localhost:7700}"
+svc_url="${svc_url:-http://localhost:7800}"
 health="$(curl -s -m3 "${svc_url}/memory/health" 2>/dev/null)"
 if echo "${health}" | grep -q '"status": *"ok"'; then
     shared="$(echo "${health}" | grep -o '"entries": *[0-9]*' | grep -o '[0-9]*')"
@@ -141,13 +141,13 @@ else
     ok "brain backups fresh (${age_days}d old)"
 fi
 
-# 6. Drift de versión de OpenCode: binario instalado vs pin del repo. warn (no bad): no
-#    tumba nada, pero el próximo update.sh cambia la versión y mejor alinearlo a propósito.
+# 6. OpenCode version drift: the installed binary against the repo's pin. A warning, not a
+#    failure: nothing breaks, but the next update.sh changes the version; align it on purpose.
 oc_pin="$(cat "${REPO_ROOT}/configs/opencode.version" 2>/dev/null)"
 if command -v opencode &>/dev/null && [ -n "${oc_pin}" ]; then
     oc_ver="$(opencode --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
     if [ -z "${oc_ver}" ]; then
-        warn "no pude leer la versión del binario opencode"
+        warn "could not read the version of the opencode binary"
     elif [ "${oc_ver}" = "${oc_pin}" ]; then
         ok "opencode ${oc_ver} aligned with the repo pin"
     else

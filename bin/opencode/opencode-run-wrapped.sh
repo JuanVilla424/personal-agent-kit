@@ -25,7 +25,7 @@ command -v jq &>/dev/null || fail "jq is not installed"
 
 # .env only to read MEMORY_SERVICE_URL/TOKEN in this process — never printed or logged.
 set -a; [ -f "$REPO_ROOT/.env" ] && . "$REPO_ROOT/.env"; set +a
-MEMORY_URL="${MEMORY_SERVICE_URL:-http://localhost:7700}"
+MEMORY_URL="${MEMORY_SERVICE_URL:-http://localhost:7800}"
 
 # ── 1. Look up relevant memory (best-effort, never blocks the run) ──
 CONTEXT=""

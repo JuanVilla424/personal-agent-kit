@@ -222,7 +222,7 @@ def test_units_render_for_any_user_and_any_checkout_path(unit, tmp_path):
 
 
 def test_env_file_is_rendered_private_and_never_overwritten(tmp_path):
-    shutil.copy(REPO_ROOT / ".env.template", tmp_path / ".env.template")
+    shutil.copy(REPO_ROOT / ".env.example", tmp_path / ".env.example")
 
     assert _lib("setup_env_file", tmp_path).returncode == 0
 
@@ -238,7 +238,7 @@ def test_env_file_is_rendered_private_and_never_overwritten(tmp_path):
 
 def test_a_template_env_gets_a_real_token(tmp_path):
     """The tokens of the template's own comments must never count as configured auth."""
-    shutil.copy(REPO_ROOT / ".env.template", tmp_path / ".env")
+    shutil.copy(REPO_ROOT / ".env.example", tmp_path / ".env")
     (tmp_path / ".venv").symlink_to(REPO_ROOT / ".venv")
 
     configured = _lib(
@@ -312,11 +312,11 @@ def _listener(port: int, cwd: Path, script: Path | None = None) -> subprocess.Po
 @pytest.mark.parametrize(
     ("env", "resolved"),
     [
-        (None, "7633 7700 memory-qdrant memory_index"),
+        (None, "7733 7800 memory-qdrant-7733 memory_index_7733"),
         ("QDRANT_PORT=7633\nMEMORY_SERVICE_PORT=7700\n", "7633 7700 memory-qdrant memory_index"),
         (
-            'QDRANT_PORT="7733"  # next to another kit\nMEMORY_SERVICE_PORT=7800\n',
-            "7733 7800 memory-qdrant-7733 memory_index_7733",
+            'QDRANT_PORT="7833"  # next to another kit\nMEMORY_SERVICE_PORT=7900\n',
+            "7833 7900 memory-qdrant-7833 memory_index_7833",
         ),
     ],
 )
@@ -346,22 +346,22 @@ def test_the_qdrant_compose_is_the_default_instance_until_it_is_given_ports(tmp_
         return json.loads(shown.stdout)
 
     default = config()
-    assert default["name"] == "memory_index"
-    assert default["services"]["qdrant"]["container_name"] == "memory-qdrant"
-    assert [str(p["published"]) for p in default["services"]["qdrant"]["ports"]] == ["7633", "7634"]
+    assert default["name"] == "memory_index_7733"
+    assert default["services"]["qdrant"]["container_name"] == "memory-qdrant-7733"
+    assert [str(p["published"]) for p in default["services"]["qdrant"]["ports"]] == ["7733", "7734"]
 
     given = tmp_path / "compose.env"
     given.write_text(
-        "QDRANT_PORT=7733\nQDRANT_GRPC_PORT=7734\nQDRANT_CONTAINER=memory-qdrant-7733\n",
+        "QDRANT_PORT=7833\nQDRANT_GRPC_PORT=7834\nQDRANT_CONTAINER=memory-qdrant-7833\n",
         encoding="utf-8",
     )
-    own = config("--env-file", str(given), "-p", "memory_index_7733")
-    assert own["services"]["qdrant"]["container_name"] == "memory-qdrant-7733"
-    assert [str(p["published"]) for p in own["services"]["qdrant"]["ports"]] == ["7733", "7734"]
+    own = config("--env-file", str(given), "-p", "memory_index_7833")
+    assert own["services"]["qdrant"]["container_name"] == "memory-qdrant-7833"
+    assert [str(p["published"]) for p in own["services"]["qdrant"]["ports"]] == ["7833", "7834"]
     volumes = (default["volumes"], own["volumes"])
     assert [v["qdrant_memory_storage"]["name"] for v in volumes] == [
-        "memory_index_qdrant_memory_storage",
         "memory_index_7733_qdrant_memory_storage",
+        "memory_index_7833_qdrant_memory_storage",
     ]
 
 
@@ -377,13 +377,22 @@ def test_the_qdrant_of_another_checkout_is_never_adopted(tmp_path, found_by):
     assert not [call for call in calls if call.endswith("up -d")]
 
 
-def test_a_kit_on_its_own_ports_gets_a_qdrant_of_its_own(tmp_path):
-    checkout = _brain_checkout(tmp_path / "kit", "QDRANT_PORT=7733\nMEMORY_SERVICE_PORT=7800\n")
+@pytest.mark.parametrize(
+    ("env", "port"), [(None, "7733"), ("QDRANT_PORT=7833\nMEMORY_SERVICE_PORT=7900\n", "7833")]
+)
+def test_each_kit_gets_a_qdrant_of_its_own_on_its_ports(tmp_path, env, port):
+    checkout = _brain_checkout(tmp_path / "kit", env)
+    # the Qdrant of an install from the first versions is running: it is not this kit's
     result, calls = _setup_qdrant(checkout, tmp_path, FAKE_RUNNING="memory-qdrant")
     assert "LOCAL_BRAIN=1" in result.stdout
     started = [call for call in calls if call.endswith("up -d")]
-    assert len(started) == 1 and " -p memory_index_7733 " in started[0]
-    given = {"QDRANT_PORT=7733", "QDRANT_GRPC_PORT=7734", "QDRANT_CONTAINER=memory-qdrant-7733"}
+    assert len(started) == 1 and f" -p memory_index_{port} " in started[0]
+    grpc = str(int(port) + 1)
+    given = {
+        f"QDRANT_PORT={port}",
+        f"QDRANT_GRPC_PORT={grpc}",
+        f"QDRANT_CONTAINER=memory-qdrant-{port}",
+    }
     assert given <= set(calls)
 
 
@@ -392,7 +401,7 @@ def test_its_own_running_qdrant_is_left_as_it_is(tmp_path):
     result, calls = _setup_qdrant(
         checkout,
         tmp_path,
-        FAKE_RUNNING="memory-qdrant",
+        FAKE_RUNNING="memory-qdrant-7733",
         FAKE_NAMED_OWNER=f"{checkout}/local/scripts/memory_index",
     )
     assert "LOCAL_BRAIN=1" in result.stdout and "already running" in result.stdout

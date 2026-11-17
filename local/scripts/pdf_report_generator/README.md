@@ -17,7 +17,7 @@ Generates `.pdf` files with corporate formatting from the same JSON spec used by
 ```bash
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
-cp .env.template .env
+cp .env.example .env
 ```
 
 ## 🖥️ CLI

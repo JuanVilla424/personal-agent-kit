@@ -16,7 +16,7 @@ Generates `.xlsx` files with corporate formatting from a declarative JSON spec.
 ```bash
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
-cp .env.template .env
+cp .env.example .env
 ```
 
 ## 🖥️ CLI

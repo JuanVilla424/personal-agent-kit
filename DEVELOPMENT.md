@@ -122,7 +122,7 @@ git add helpers/ai18n
 
 **Configuration stays out of git**:
 
-- **Local settings** go in the root `.env`, which git ignores; `.env.template` lists every
+- **Local settings** go in the root `.env`, which git ignores; `.env.example` lists every
   variable with a placeholder. Only `local/scripts/notify/` and `local/monitoring/` keep their own
   `.env`.
 - **Every variable is documented:** `utils/tests/test_env_template_guard.py` fails when the code

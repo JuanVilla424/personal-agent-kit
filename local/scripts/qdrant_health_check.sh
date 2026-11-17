@@ -1,13 +1,15 @@
 #!/bin/bash
-# Checks if this checkout's Qdrant container is running: memory-qdrant, or memory-qdrant-<port>
-# when QDRANT_PORT in the root .env is not the default 7633 (the names bin/_lib.sh gives it).
+# Checks if this checkout's Qdrant container is running: memory-qdrant-<port>, the name
+# bin/_lib.sh gives it (memory-qdrant-7733 by default; plain memory-qdrant for an install still
+# on 7633, the port of the first versions).
 # Posts DOWN alert to Slack on failure; posts RECOVERED when it comes back.
 # Cron: 0 */6 * * * (set -a; . <repo>/local/scripts/notify/.env; <repo>/local/scripts/qdrant_health_check.sh) >> <repo>/local/scripts/qdrant_health_check.log 2>&1
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PORT="$(grep -m1 '^QDRANT_PORT=' "${REPO}/.env" 2>/dev/null | cut -d= -f2- | tr -d "\"' ")"
+PORT="${PORT:-7733}"
 SUFFIX=""
-[[ -n "${PORT}" && "${PORT}" != "7633" ]] && SUFFIX="-${PORT}"
+[[ "${PORT}" != "7633" ]] && SUFFIX="-${PORT}"
 CONTAINER="memory-qdrant${SUFFIX}"
 STATE_FILE="${TMPDIR:-/tmp}/qdrant_health_check${SUFFIX}.down"
 

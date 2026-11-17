@@ -13,8 +13,8 @@ If it is down, the agent works with partial context → **tell the user, don't a
 
 | Piece                                    | What it holds                              | What's lost if it fails            |
 | ---------------------------------------- | ------------------------------------------ | ---------------------------------- |
-| **Qdrant `agent_memory`** (local, :7633) | Every memory, with its history             | Search and the brief               |
-| **`memory_service`** (local, :7700)      | Search, replacement, brief, consolidation  | Everything above, as an API        |
+| **Qdrant `agent_memory`** (local, :7733) | Every memory, with its history             | Search and the brief               |
+| **`memory_service`** (local, :7800)      | Search, replacement, brief, consolidation  | Everything above, as an API        |
 | **Lessons** (`~/.pak/lessons.jsonl`)     | Incidents, their controls and their expiry | Why a control exists, when it ends |
 
 ---
@@ -42,8 +42,8 @@ If it is down, the agent works with partial context → **tell the user, don't a
 ## Check before a task
 
 ```bash
-curl -s http://localhost:7633/collections    # local Qdrant
-curl -s http://localhost:7700/memory/health  # local memory_service
+curl -s http://localhost:7733/collections    # local Qdrant
+curl -s http://localhost:7800/memory/health  # local memory_service
 ```
 
 Run this before any task that depends on accumulated context. If a layer is down, **tell the

@@ -51,19 +51,24 @@ def _watch(scratch: Path, env: str | None, running: str) -> tuple[subprocess.Com
     return result, log.read_text(encoding="utf-8")
 
 
-def test_the_default_instance_is_watched_by_its_default_name(tmp_path):
-    result, posted = _watch(tmp_path, None, running="memory-qdrant")
+def test_the_kits_own_instance_is_watched_by_its_name(tmp_path):
+    result, posted = _watch(tmp_path, None, running="memory-qdrant-7733")
     assert result.returncode == 0 and posted == ""
     assert not list(tmp_path.glob("qdrant_health_check*.down"))
 
 
-def test_a_kit_on_its_own_port_watches_its_own_container_not_the_default_one(tmp_path):
-    # the other kit's Qdrant is up, this kit's is not: the default name must not hide it
-    _, posted = _watch(tmp_path, 'QDRANT_PORT="7733"\n', running="memory-qdrant")
-    assert "`memory-qdrant-7733` is NOT running" in posted
-    assert "container not found" in posted and "bin/install.sh" in posted
-    assert (tmp_path / "qdrant_health_check-7733.down").exists()
+def test_an_install_still_on_the_first_port_keeps_its_container_name(tmp_path):
+    result, posted = _watch(tmp_path, "QDRANT_PORT=7633\n", running="memory-qdrant")
+    assert result.returncode == 0 and posted == ""
 
-    _, posted = _watch(tmp_path, None, running="memory-qdrant memory-qdrant-7733")
-    assert "`memory-qdrant-7733` is back UP" in posted
-    assert not (tmp_path / "qdrant_health_check-7733.down").exists()
+
+def test_a_kit_on_another_port_watches_its_own_container_not_the_default_one(tmp_path):
+    # the default kit's Qdrant is up, this one's is not: the default name must not hide it
+    _, posted = _watch(tmp_path, 'QDRANT_PORT="7833"\n', running="memory-qdrant-7733")
+    assert "`memory-qdrant-7833` is NOT running" in posted
+    assert "container not found" in posted and "bin/install.sh" in posted
+    assert (tmp_path / "qdrant_health_check-7833.down").exists()
+
+    _, posted = _watch(tmp_path, None, running="memory-qdrant-7733 memory-qdrant-7833")
+    assert "`memory-qdrant-7833` is back UP" in posted
+    assert not (tmp_path / "qdrant_health_check-7833.down").exists()

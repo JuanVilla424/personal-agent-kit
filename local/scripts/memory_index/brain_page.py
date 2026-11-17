@@ -10,8 +10,9 @@ regions that stand for what happened, and every region shows the evidence behind
 
 The emitters stamp whole seconds, so the stream numbers every event: two that share a second
 both arrive, and a page that reconnects resumes at its exact one. Nothing is read while no page
-is open. The page shows what the agent is doing, so it is served to this machine only: from
-anywhere else, reach it through an SSH tunnel.
+is open. The page shows what the agent is doing, so it is served to this machine only, by
+address and by name (localhost, 127.0.0.1, ::1): a site that makes its own name resolve to this
+machine cannot read it. From anywhere else, reach it through an SSH tunnel.
 """
 
 import asyncio
@@ -27,10 +28,12 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.datastructures import Headers
 
 import brain_bus
 from brain_bus import ISO_UTC, REGIONS, REPO_ROOT
@@ -45,6 +48,7 @@ NIGHT_MAX_AGE_S = 26 * 3600  # the consolidation runs every night
 REPORT_MAX_AGE_S = 8 * 24 * 3600
 NO_STORE = {"Cache-Control": "no-store"}
 LOCAL_ONLY = "the brain page is served to this machine only"
+LOCAL_NAMES = frozenset({"localhost", "127.0.0.1", "::1"})  # what this machine is called
 _IDENT = re.compile(r"[A-Za-z0-9_.:-]{1,64}")
 _OPEN_TASK = re.compile(r"^\s*- \[ \]\s+(.*)$")
 _GATE = re.compile(r"--cov-fail-under=(\d+(?:\.\d+)?)")
@@ -554,8 +558,26 @@ def is_local(client) -> bool:
         return False
 
 
+def _host_name(value: str) -> str:
+    """The name in a Host header, without its port: `[::1]:7800` is `::1`."""
+    value = value.strip().lower()
+    if value.startswith("["):
+        return value[1 : value.find("]")] if "]" in value else ""
+    return value.rsplit(":", 1)[0] if value.count(":") == 1 else value
+
+
+def allowed(client, headers) -> bool:
+    """True when the request comes from this machine AND names it. The connection alone is not
+    enough: a site whose name is made to resolve to 127.0.0.1 (DNS rebinding) reaches this port
+    from the user's own browser, but its requests carry its own name in Host and Origin."""
+    if not is_local(client) or _host_name(headers.get("host", "")) not in LOCAL_NAMES:
+        return False
+    origin = headers.get("origin")
+    return origin is None or (urlsplit(origin).hostname or "") in LOCAL_NAMES
+
+
 def _local_only(request: Request) -> None:
-    if not is_local(request.client):
+    if not allowed(request.client, request.headers):
         raise HTTPException(status_code=403, detail=LOCAL_ONLY)
 
 
@@ -563,7 +585,7 @@ class _LocalFiles(StaticFiles):
     """The page's own files, with the same rule as its API."""
 
     async def __call__(self, scope, receive, send) -> None:
-        if scope["type"] == "http" and not is_local(scope.get("client")):
+        if scope["type"] == "http" and not allowed(scope.get("client"), Headers(scope=scope)):
             await JSONResponse({"detail": LOCAL_ONLY}, status_code=403)(scope, receive, send)
             return
         await super().__call__(scope, receive, send)

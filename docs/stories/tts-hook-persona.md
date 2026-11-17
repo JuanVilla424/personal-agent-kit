@@ -79,7 +79,7 @@ environments where it does work — with `timeout=` as a safety net either way.
 - `.claude/hooks/tts_engines/edge_tts_engine.py` — implementation using the `edge-tts` library.
 - `.claude/hooks/audio_queue.py` — non-blocking playback queue (so two consecutive messages
   don't overlap within the same process).
-- `.env.template` (root) — adds `TTS_ENGINE=edge-tts` with a comment.
+- `.env.example` (root) — adds `TTS_ENGINE=edge-tts` with a comment.
 - `local/hooks/install-hooks.py` — register `tts_hook.py` on `Stop` and `Notification`.
 - `local/hooks/README.md` — new row in the hooks table.
 
@@ -174,7 +174,7 @@ same `claude -p` + `PAK_HOOK_RUNNING=1` pattern as `persona_rewriter.py`:
 - Local heuristic first (Spanish-vs-English stopword bag, no cost or latency) —
   only calls the model when the text really seems to need translation. Claude's own
   responses (already in the target language) never trigger the extra call.
-- `TTS_LANGUAGE=es` (new, in `.env`/`.env.template`) — target language configurable
+- `TTS_LANGUAGE=es` (new, in `.env`/`.env.example`) — target language configurable
   globally, not hardcoded. [Note, later in this session: the default was later changed to
   `en` — see `MODELS.md`'s "Output Language" section and the roadmap note there.]
 - Always runs, BEFORE the (optional) persona step, and works the same with
@@ -262,7 +262,7 @@ was ruled out for CPU latency — see the section below).
   event type can be carried through to the rewrite step.
 - `tts_speak_worker.py` — if `TTS_PERSONA` is set, calls `persona_rewriter.rewrite()`
   before synthesis and passes `rate`/`pitch` to the engine.
-- `.env.template` and `.env` — `TTS_PERSONA=nova` (empty = no rewriting, clean text as-is,
+- `.env.example` and `.env` — `TTS_PERSONA=nova` (empty = no rewriting, clean text as-is,
   Story A's behavior).
 
 ### `persona.md` schema (persona `nova`, already filled in)
@@ -390,7 +390,7 @@ words].
   volume `chatterbox-tts-server_hf_cache` (model already downloaded, avoids re-downloading)
   **were kept**, in case this gets revisited later.
 - It was **not** integrated into the hook: `tts_engines/chatterbox_engine.py` doesn't exist,
-  `ENGINES`, `.env`, `.env.template`, and `requirements.txt` were untouched — `TTS_ENGINE`
+  `ENGINES`, `.env`, `.env.example`, and `requirements.txt` were untouched — `TTS_ENGINE`
   stays `edge-tts`.
 - To pick this back up later (same box): `docker compose -f
 local/scripts/chatterbox-tts-server/docker-compose-cpu.yml up -d` (reuses the image and the
@@ -428,7 +428,7 @@ covers) — slow-but-audible beats silence in that one case.
   it and exits 0).
 - `requirements.txt` — added `requests` (already transitively available in the
   `.venv`, but undeclared — fixed so this repo declares its own deps).
-- `.env.template` and `.env` — `TTS_FALLBACK_ENGINE=chatterbox`.
+- `.env.example` and `.env` — `TTS_FALLBACK_ENGINE=chatterbox`.
 - `bin/install.sh` — new step `[5/11]` "Local TTS (Chatterbox — offline fallback)": brings
   up the container (`docker compose -f docker-compose-cpu.yml up -d`) if Docker is
   available; unlike Qdrant/memory_service, this **never fails the installer** if Docker

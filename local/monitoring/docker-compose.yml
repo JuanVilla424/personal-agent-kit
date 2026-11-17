@@ -62,7 +62,7 @@ volumes:
 
 networks:
   # Qdrant lives in the memory_index compose; join its network to scrape it by
-  # DNS name (memory-qdrant:6333) without exposing Qdrant beyond docker.
+  # DNS name (memory-qdrant-7733:6333) without exposing Qdrant beyond docker.
   memory_index:
     external: true
-    name: memory_index_default
+    name: memory_index_7733_default

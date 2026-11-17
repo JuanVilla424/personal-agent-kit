@@ -36,7 +36,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 REPO_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(REPO_ROOT / ".env")
 
-MEMORY_URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7700").rstrip("/")
+MEMORY_URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7800").rstrip("/")
 MEMORY_TOKEN = os.getenv("MEMORY_SERVICE_TOKEN", "")
 TIMEOUT_SECONDS = 10
 

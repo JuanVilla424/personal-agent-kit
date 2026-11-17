@@ -24,9 +24,9 @@ LOADERS = [
 def test_loader_parents3_is_repo_root(rel):
     f = REPO / rel
     assert f.exists(), f"loader does not exist: {rel}"
-    # parents[3] of each loader must be the repo root (checked via .env.template).
+    # parents[3] of each loader must be the repo root (checked via .env.example).
     assert f.resolve().parents[3] == REPO
-    assert (f.resolve().parents[3] / ".env.template").exists()
+    assert (f.resolve().parents[3] / ".env.example").exists()
 
 
 def _import_config_in_subprocess(extra_env=None):

@@ -54,7 +54,7 @@ MEMORY_COLLECTION = os.getenv("MEMORY_COLLECTION", "agent_memory")
 # (scope=shared) memory — two Qdrant collections on the same local instance, not two
 # machines. Keeping them separate means a bulk operation on one never touches the other.
 USER_COLLECTION = os.getenv("MEMORY_USER_COLLECTION", "agent_memory_user")
-MEMORY_PORT = int(os.getenv("MEMORY_SERVICE_PORT", "7700"))
+MEMORY_PORT = int(os.getenv("MEMORY_SERVICE_PORT", "7800"))
 # Loopback only: the memory holds what the owner told the agent, and nothing else needs to reach it.
 MEMORY_HOST = os.getenv("MEMORY_SERVICE_HOST", "127.0.0.1")
 HEARTBEAT_SECONDS = int(os.getenv("MEMORY_HEARTBEAT_SECONDS", "60"))

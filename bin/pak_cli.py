@@ -114,7 +114,7 @@ def kit_setting(key: str, default: str = "") -> str:
 
 
 def check_memory() -> tuple[str, str]:
-    base = kit_setting("MEMORY_SERVICE_URL", "http://localhost:7700").rstrip("/")
+    base = kit_setting("MEMORY_SERVICE_URL", "http://localhost:7800").rstrip("/")
     try:
         with urllib.request.urlopen(base + "/memory/health", timeout=HEALTH_TIMEOUT_S) as resp:
             health = json.loads(resp.read().decode("utf-8"))

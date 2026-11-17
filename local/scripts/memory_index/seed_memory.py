@@ -15,7 +15,7 @@ from pathlib import Path
 import requests
 
 THIS = Path(__file__).resolve()
-URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7700").rstrip("/")
+URL = os.getenv("MEMORY_SERVICE_URL", "http://localhost:7800").rstrip("/")
 TOKEN = os.getenv("MEMORY_SERVICE_TOKEN", "")
 HEADERS = {"X-Memory-Token": TOKEN} if TOKEN else {}
 

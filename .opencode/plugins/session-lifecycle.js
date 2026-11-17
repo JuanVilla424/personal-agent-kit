@@ -47,7 +47,7 @@ function _trace(msg) {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
-const MEMORY_URL = (process.env.MEMORY_SERVICE_URL || "http://localhost:7700").replace(/\/$/, "")
+const MEMORY_URL = (process.env.MEMORY_SERVICE_URL || "http://localhost:7800").replace(/\/$/, "")
 const MEMORY_TOKEN = process.env.MEMORY_SERVICE_TOKEN || ""
 const PUSHGATEWAY_URL = (process.env.PUSHGATEWAY_URL || "http://localhost:9391").replace(/\/$/, "")
 const METRICS_STATE_DIR = join(process.env.HOME || "/tmp", ".claude", "metrics-state")

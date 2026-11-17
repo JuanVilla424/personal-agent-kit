@@ -48,7 +48,7 @@ alongside the outgoing-notification system (`notify.py`) in this same directory.
 cd local/scripts/notify
 
 # 1. Configure variables in .env
-cp .env.template .env
+cp .env.example .env
 # Add: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_WEBHOOK_URL
 
 # 2. Install dependencies

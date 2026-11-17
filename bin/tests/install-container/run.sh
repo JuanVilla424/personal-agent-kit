@@ -16,7 +16,7 @@ CONTAINER="pak-install-test"
 ACCOUNT="someone"
 CHECKOUT="/home/${ACCOUNT}/work/tools/pak"
 RUN_DIR="$REPO_ROOT/temp/install-test/$(date +%Y%m%dT%H%M%S)"
-HEALTH_URL="http://localhost:7700/memory/health"
+HEALTH_URL="http://localhost:7800/memory/health"
 
 mkdir -p "$RUN_DIR"
 KEEP=0
@@ -90,16 +90,16 @@ check "the unit points at this checkout" \
 check "no placeholder reached the machine" \
     "! grep -q '<user>' /etc/systemd/system/agent-memory.service && ! grep -q '/home/<user>' .env"
 check ".env is private" "[ \"\$(stat -c %a .env)\" = 600 ]"
-check "qdrant answers" "curl -sf -m5 http://localhost:7633/collections"
+check "qdrant answers" "curl -sf -m5 http://localhost:7733/collections"
 check "memory_service answers" "curl -sf -m5 $HEALTH_URL | grep -q '\"status\":\"ok\"'"
 check "memory_service refuses a call without a token" \
-    "[ \"\$(curl -s -m5 -o /dev/null -w '%{http_code}' 'http://localhost:7700/memory/search?q=x')\" = 401 ]"
+    "[ \"\$(curl -s -m5 -o /dev/null -w '%{http_code}' 'http://localhost:7800/memory/search?q=x')\" = 401 ]"
 check "a memory can be written and found again" "
     source <(grep -E '^MEMORY_SERVICE_TOKEN=' .env)
-    curl -sf -m30 -X POST http://localhost:7700/memory/add \
+    curl -sf -m30 -X POST http://localhost:7800/memory/add \
         -H \"x-memory-token: \$MEMORY_SERVICE_TOKEN\" -H 'content-type: application/json' \
         -d '{\"text\": \"the install test wrote this sentence about purple elephants\"}' >/dev/null
-    curl -sf -m30 -G http://localhost:7700/memory/search --data-urlencode 'q=purple elephants' \
+    curl -sf -m30 -G http://localhost:7800/memory/search --data-urlencode 'q=purple elephants' \
         -H \"x-memory-token: \$MEMORY_SERVICE_TOKEN\" | grep -q 'purple elephants'"
 check "the guards are registered" \
     "grep -q 'rm-guard.sh' ~/.claude/settings.json && grep -q 'pre-write-guard.sh' ~/.claude/settings.json \
@@ -139,7 +139,7 @@ check "bmad activates on request" "[ -d .claude/commands/bmad/core ] && [ -d .cl
 check "the conversation language changed" "grep -q '^respond: es' ai18n.yaml && grep -q '^document: en' ai18n.yaml"
 check "the memory survived the re-install" "
     source <(grep -E '^MEMORY_SERVICE_TOKEN=' .env)
-    curl -sf -m30 -G http://localhost:7700/memory/search --data-urlencode 'q=purple elephants' \
+    curl -sf -m30 -G http://localhost:7800/memory/search --data-urlencode 'q=purple elephants' \
         -H \"x-memory-token: \$MEMORY_SERVICE_TOKEN\" | grep -q 'purple elephants'"
 
 echo "== Re-run with OpenCode: --with-opencode"

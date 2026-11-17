@@ -20,6 +20,7 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 HERE = ("127.0.0.1", 50000)
+LOCALHOST = "http://localhost:7800"
 
 
 @pytest.fixture()
@@ -464,7 +465,7 @@ def _app(tmp_path, monkeypatch) -> FastAPI:
 
 
 def test_the_page_and_its_api_answer_this_machine(tmp_path, bus, monkeypatch):
-    client = TestClient(_app(tmp_path, monkeypatch), client=HERE)
+    client = TestClient(_app(tmp_path, monkeypatch), base_url=LOCALHOST, client=HERE)
     page = client.get("/brain/")
     assert page.status_code == 200 and "brain" in page.text
     state = client.get("/api/brain/state")
@@ -477,9 +478,22 @@ def test_the_page_and_its_api_answer_this_machine(tmp_path, bus, monkeypatch):
 
 @pytest.mark.parametrize("path", ["/brain/", "/api/brain/state", "/api/brain/events"])
 def test_nothing_of_the_page_is_served_to_another_machine(tmp_path, monkeypatch, path):
-    client = TestClient(_app(tmp_path, monkeypatch), client=("192.0.2.7", 50000))
-    refused = client.get(path)
+    app = _app(tmp_path, monkeypatch)
+    refused = TestClient(app, base_url=LOCALHOST, client=("192.0.2.7", 50000)).get(path)
     assert refused.status_code == 403 and "this machine only" in refused.text
+
+
+@pytest.mark.parametrize("path", ["/brain/", "/api/brain/state", "/api/brain/events"])
+def test_a_site_whose_name_resolves_to_this_machine_cannot_read_the_page(
+    tmp_path, monkeypatch, path
+):
+    """DNS rebinding: the user's browser opens a hostile site whose name then resolves to
+    127.0.0.1. Its requests reach this port from this machine, but they carry its own name."""
+    app = _app(tmp_path, monkeypatch)
+    rebound = TestClient(app, base_url="http://attacker.example:7800", client=HERE)
+    assert rebound.get(path).status_code == 403
+    across = TestClient(app, base_url=LOCALHOST, client=HERE)
+    assert across.get(path, headers={"Origin": "https://attacker.example"}).status_code == 403
 
 
 def test_only_a_loopback_address_is_this_machine():
@@ -488,11 +502,34 @@ def test_only_a_loopback_address_is_this_machine():
     assert not ba.is_local(None) and not ba.is_local(())
 
 
+@pytest.mark.parametrize(
+    ("headers", "accepted"),
+    [
+        ({"host": "localhost:7800"}, True),
+        ({"host": "127.0.0.1:7800"}, True),
+        ({"host": "[::1]:7800"}, True),
+        ({"host": "LOCALHOST"}, True),
+        ({"host": "localhost:7800", "origin": "http://localhost:7800"}, True),
+        ({"host": "127.0.0.1", "origin": "http://[::1]:7800"}, True),
+        ({"host": "attacker.example:7800"}, False),
+        ({"host": "localhost.attacker.example"}, False),
+        ({"host": "[::1"}, False),
+        ({"host": "::1"}, True),
+        ({}, False),
+        ({"host": "localhost", "origin": "https://attacker.example"}, False),
+        ({"host": "localhost", "origin": "null"}, False),
+    ],
+)
+def test_a_request_must_name_this_machine(headers, accepted):
+    assert ba.allowed(HERE, headers) is accepted
+    assert ba.allowed(("192.0.2.7", 1), headers) is False
+
+
 def test_a_service_without_the_page_files_still_serves_the_api(tmp_path, monkeypatch):
     monkeypatch.setattr(ba, "UI_DIR", tmp_path / "missing")
     monkeypatch.setattr(ba, "state", lambda: {"ts": "now"})
     app = FastAPI()
     ba.mount(app, dict)
-    client = TestClient(app, client=HERE)
+    client = TestClient(app, base_url=LOCALHOST, client=HERE)
     assert client.get("/api/brain/state").status_code == 200
     assert client.get("/brain/").status_code == 404

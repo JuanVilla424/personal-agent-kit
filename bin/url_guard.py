@@ -2,7 +2,7 @@
 """url_guard.py — the web tools are a channel out, and a way back in.
 
 What a session knows can travel inside a URL (`?q=<secret>`), and a URL can point back at this
-machine (`http://127.0.0.1:7700`, the memory service) or at a cloud metadata address. This guard
+machine (`http://127.0.0.1:7800`, the memory service) or at a cloud metadata address. This guard
 sees every fetched URL and every search query, in both engines: Claude Code through
 local/hooks/url-guard.py and OpenCode through .opencode/plugins/url-guard.js.
 

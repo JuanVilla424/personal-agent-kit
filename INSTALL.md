@@ -25,8 +25,8 @@ bash bin/install.sh
 ```
 
 The default is a core install: Claude Code, the guards and hooks, a local Qdrant and the
-`memory_service` (systemd, `:7700`). Each optional part is asked about when there is a terminal.
-Once it is running, the brain page is at `http://localhost:7700/brain/`.
+`memory_service` (systemd, `:7800`). Each optional part is asked about when there is a terminal.
+Once it is running, the brain page is at `http://localhost:7800/brain/`.
 
 ## 🔇 Without Prompts
 
@@ -56,22 +56,22 @@ To add a part later, run the installer again with its flag.
 
 ## 🔢 Own Ports for the Brain
 
-The brain uses two ports of this machine: Qdrant on `7633` (and `7634` for gRPC) and the
-`memory_service` on `7700`. When something else already holds them, another kit for example, the
-installer does not adopt that Qdrant: it skips the brain and says whose it is. Give this checkout
-its own ports in `.env` and run the installer again:
+The brain has ports of its own, the same on every machine: Qdrant on `7733` (and `7734` for gRPC,
+container `memory-qdrant-7733`) and the `memory_service` on `7800`. When something else already
+holds them, the installer does not adopt that Qdrant: it skips the brain and says whose it is.
+Only then, give this checkout other ports in `.env` and run the installer again:
 
 | Setting               | Example                 |
 | --------------------- | ----------------------- |
-| `QDRANT_PORT`         | `7733`                  |
-| `MEMORY_SERVICE_PORT` | `7800`                  |
-| `MEMORY_SERVICE_URL`  | `http://localhost:7800` |
+| `QDRANT_PORT`         | `7833`                  |
+| `MEMORY_SERVICE_PORT` | `7900`                  |
+| `MEMORY_SERVICE_URL`  | `http://localhost:7900` |
 
-The three move together. On a port of its own the Qdrant container is `memory-qdrant-<port>`,
-with its own volume and `<port>+1` for gRPC, so nothing is shared with the other kit. The
-installer, `pak doctor` and `bash bin/brain-health.sh` count the service as this kit's only when
-it accepts this kit's token, never because something answers on the address. The optional
-monitoring stack in `local/monitoring/` scrapes the default Qdrant only.
+The three move together. On another port the Qdrant container is `memory-qdrant-<port>`, with
+its own volume and `<port>+1` for gRPC, so nothing is shared. The installer, `pak doctor` and
+`bash bin/brain-health.sh` count the service as this kit's only when it accepts this kit's token,
+never because something answers on the address. The optional monitoring stack in
+`local/monitoring/` scrapes the Qdrant on the default ports.
 
 ## 🔌 OpenCode Only
 
@@ -130,7 +130,7 @@ says why. To run a task on this machine, with the guards as the only line, queue
 
 4. **Configure environment variables**
 
-   Copy the root `.env.template` to `.env` (single config file for every tool) and fill in the required values. The only exceptions with their own `.env` are `local/scripts/notify/` and `local/monitoring/`. Never commit `.env` files. `utils/tests/test_env_template_guard.py` enforces that every env var read by the code stays documented in these templates.
+   Copy the root `.env.example` to `.env` (single config file for every tool) and fill in the required values. The only exceptions with their own `.env` are `local/scripts/notify/` and `local/monitoring/`. Never commit `.env` files. `utils/tests/test_env_template_guard.py` enforces that every env var read by the code stays documented in these templates.
 
 [DEVELOPMENT.md](DEVELOPMENT.md#-local-environment) adds what the full test suite and the
 end-to-end checks need.

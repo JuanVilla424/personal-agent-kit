@@ -20,14 +20,14 @@
 
 | Layer                                                     | What it stores            | If it fails                         |
 | --------------------------------------------------------- | ------------------------- | ----------------------------------- |
-| Qdrant `agent_memory` (local, :7633)                      | Agent's semantic memory   | Semantic search over past context   |
+| Qdrant `agent_memory` (local, :7733)                      | Agent's semantic memory   | Semantic search over past context   |
 | Knowledge graph (`~/.claude/projects/<repo-hash>/memory`) | Learned preferences/rules | Inconsistent behavior with the user |
 
 **Health (per task):**
 
 ```bash
-curl -s http://localhost:7633/collections
-curl -s http://localhost:7700/memory/health
+curl -s http://localhost:7733/collections
+curl -s http://localhost:7800/memory/health
 ```
 
 **No sync:** no server, no replica, no S3 cron. The memory never travels via git and starts

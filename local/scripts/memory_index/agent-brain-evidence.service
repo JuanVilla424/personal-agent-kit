@@ -1,0 +1,13 @@
+[Unit]
+Description=Personal Agent Kit brain evidence (backup, memory benchmark, test coverage)
+After=agent-memory.service
+Requires=agent-memory.service
+
+[Service]
+Type=oneshot
+User=<user>
+WorkingDirectory=/home/<user>/personal-agent-kit
+Environment=HOME=/home/<user>
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/home/<user>/personal-agent-kit/bin/brain-evidence.sh

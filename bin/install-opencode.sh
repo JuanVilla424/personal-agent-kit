@@ -60,6 +60,7 @@ if [ "${LOCAL_MEMSVC:-0}" = "1" ]; then
         info "Embedding model: a first install downloads it (a few hundred MB)..."
         warm_memory_model && ok "Embedding model ready" \
             || warn "Embedding model not fetched yet — the first save or search will wait for it"
+        seed_brain_evidence
     else
         warn "Local memory_service not responding (:$MEMSVC_PORT)"
         v_svc=0

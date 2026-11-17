@@ -749,10 +749,15 @@ set_key('$REPO_ROOT/.env', 'MEMORY_USER_TOKENS', f'{tok}:{getpass.getuser()}', q
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory.service"
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory-consolidate.service"
         install_unit "$REPO_ROOT/local/scripts/memory_index/agent-memory-consolidate.timer"
+        install_unit "$REPO_ROOT/local/scripts/memory_index/agent-brain-evidence.service"
+        install_unit "$REPO_ROOT/local/scripts/memory_index/agent-brain-evidence.timer"
         sudo systemctl daemon-reload
         sudo systemctl enable --now agent-memory-consolidate.timer 2>/dev/null \
             && ok "nightly memory consolidation scheduled (03:30, agent-memory-consolidate.timer)" \
             || warn "could not schedule the nightly memory consolidation"
+        sudo systemctl enable --now agent-brain-evidence.timer 2>/dev/null \
+            && ok "weekly brain evidence scheduled (Sun 04:00, agent-brain-evidence.timer)" \
+            || warn "could not schedule the weekly brain evidence"
         if unit_active agent-memory.service; then
             # a re-install brings new code: the running service has to load it
             sudo systemctl restart agent-memory.service 2>/dev/null || true
@@ -1001,6 +1006,25 @@ with urllib.request.urlopen(base + 'health', timeout=5) as health:
 whoami = urllib.request.Request(base + 'whoami', headers={'X-Memory-Token': token})
 urllib.request.urlopen(whoami, timeout=5).close()
 " 2>/dev/null
+}
+
+# seed_brain_evidence → fills the brain page's Health panel on a fresh install, so it opens with
+# nothing "missing": the first night cycle when none ran yet (it takes seconds), and the backup,
+# memory benchmark and coverage report through agent-brain-evidence.service, started without
+# waiting (the test suite takes minutes) and logged to the journal. Call it once the
+# memory_service answers.
+seed_brain_evidence() {
+    if [ ! -f "$REPO_ROOT/local/scripts/a2a/logs/consolidation.json" ]; then
+        sudo systemctl start agent-memory-consolidate.service 2>/dev/null \
+            && ok "first memory consolidation done (the night cycle has evidence)" \
+            || warn "could not run the first memory consolidation — it runs tonight at 03:30"
+    fi
+    if sudo systemctl start --no-block agent-brain-evidence.service 2>/dev/null; then
+        ok "brain evidence running in the background (backup, memory benchmark, coverage)"
+        info "  follow it with: journalctl -u agent-brain-evidence -f"
+    else
+        warn "could not start the brain evidence — run it by hand: bash bin/brain-evidence.sh"
+    fi
 }
 
 # wait_memory_service → 0 once this kit's service answers on its port (MEMORY_SERVICE_PORT in

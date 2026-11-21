@@ -1,6 +1,6 @@
 python-dotenv
 requests
-fastapi>=0.162.4,<1
+fastapi>=0.163.2,<1
 uvicorn[standard]>=0.54.0,<1
 prometheus_client>=0.20,<1
 pyotp>=2.9,<3

@@ -30,7 +30,7 @@ bump2version==1.0.1
 toml>=0.10.1
 
 # Playwright for E2E browser testing (panel HTML)
-pytest-playwright>=0.5.0
+pytest-playwright>=0.10.0
 
 # ── Runtime libs needed to import/exercise bot, metrics and report modules in tests ──
 slack-bolt>=1.18.0          # Slack bot runtime (bot.py)
